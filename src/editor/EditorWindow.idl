@@ -1,0 +1,8 @@
+namespace LayrixEditor
+{
+    [default_interface]
+    runtimeclass EditorWindow : Microsoft.UI.Xaml.Window
+    {
+        EditorWindow();
+    }
+}

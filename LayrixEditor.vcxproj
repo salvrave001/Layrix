@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)obj\LayrixEditor\</BaseIntermediateOutputPath>
+    <MSBuildProjectExtensionsPath>$(MSBuildThisFileDirectory)obj\LayrixEditor\</MSBuildProjectExtensionsPath>
+  </PropertyGroup>
+  <PropertyGroup Label="Globals">
+    <CppWinRTOptimized>true</CppWinRTOptimized>
+    <CppWinRTModernIDL>true</CppWinRTModernIDL>
+    <CppWinRTRootNamespaceAutoMerge>true</CppWinRTRootNamespaceAutoMerge>
+    <MinimalCoreWin>true</MinimalCoreWin>
+    <UseWinUI>true</UseWinUI>
+    <ProjectGuid>{E2B6D8A0-1C45-4E73-9F28-6A0D3C5B7E91}</ProjectGuid>
+    <ProjectName>LayrixEditor</ProjectName>
+    <RootNamespace>LayrixEditor</RootNamespace>
+    <TargetName>LayrixEditor</TargetName>
+    <WindowsTargetPlatformVersion>10.0.22621.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformMinVersion>10.0.17763.0</WindowsTargetPlatformMinVersion>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <AppxPackage>false</AppxPackage>
+    <AppxGeneratePriEnabled>true</AppxGeneratePriEnabled>
+    <AppxPrependPriInitialPath>false</AppxPrependPriInitialPath>
+    <ShouldComputeInputPris>true</ShouldComputeInputPris>
+    <ProjectPriIndexName>Microsoft.UI.Xaml</ProjectPriIndexName>
+    <ProjectPriFileName>resources.pri</ProjectPriFileName>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup>
+    <NuGetTargetMoniker>native,Version=v0.0</NuGetTargetMoniker>
+    <TargetFrameworkMoniker>native,Version=v0.0</TargetFrameworkMoniker>
+  </PropertyGroup>
+  <PropertyGroup>
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(BaseIntermediateOutputPath)$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)src\editor;$(IntDir);$(IntDir)src\editor;$(IntDir)Generated Files;$(SolutionDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;UNICODE;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalOptions>/utf-8 /bigobj %(AdditionalOptions)</AdditionalOptions>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <CompileAsWinRT>false</CompileAsWinRT>
+    </ClCompile>
+    <ClCompile Condition="'$(Configuration)'=='Debug'">
+      <Optimization>Disabled</Optimization>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+    </ClCompile>
+    <ClCompile Condition="'$(Configuration)'=='Release'">
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>d2d1.lib;dwrite.lib;comctl32.lib;gdi32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation Condition="'$(Configuration)'=='Debug'">true</GenerateDebugInformation>
+      <GenerateDebugInformation Condition="'$(Configuration)'=='Release'">false</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="src\editor\pch.cpp">
+      <PrecompiledHeader>Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="src\editor\App.xaml.cpp" />
+    <ClCompile Include="src\editor\EditorWindow.xaml.cpp" />
+    <ClCompile Include="src\editor\TemplateCard.xaml.cpp" />
+    <ClCompile Include="src\editor\CanvasEditor.xaml.cpp" />
+    <ClCompile Include="src\editor\DesktopZoneEditor.cpp" />
+    <ClCompile Include="src\editor\EditorExport.cpp" />
+    <ClCompile Include="src\editor\XamlConnect.cpp" />
+    <ClCompile Include="src\editor\XamlTypeFactory.cpp" />
+    <ClCompile Include="$(IntDir)XamlTypeInfo.Impl.g.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\editor\pch.h" />
+    <ClInclude Include="src\editor\EditorApi.h" />
+    <ClInclude Include="src\editor\App.xaml.h" />
+    <ClInclude Include="src\editor\EditorWindow.xaml.h" />
+    <ClInclude Include="src\editor\TemplateCard.xaml.h" />
+    <ClInclude Include="src\editor\CanvasEditor.xaml.h" />
+    <ClInclude Include="src\editor\DesktopZoneEditor.h" />
+    <ClInclude Include="src\editor\XamlMetaDataProvider.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Midl Include="src\editor\App.idl" />
+    <Midl Include="src\editor\EditorWindow.idl" />
+    <Midl Include="src\editor\TemplateCard.idl" />
+    <Midl Include="src\editor\CanvasEditor.idl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ApplicationDefinition Include="src\editor\App.xaml" />
+    <Page Include="src\editor\EditorWindow.xaml" />
+    <Page Include="src\editor\TemplateCard.xaml" />
+    <Page Include="src\editor\CanvasEditor.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Windows.CppWinRT" Version="2.0.250303.1" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.6.250602001" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.3233" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="LayrixCore.vcxproj">
+      <Project>{C4A1E7B2-6D34-4F18-9A55-2B8E0D1C7F63}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <Target Name="AddProcessedXamlFilesToCopyLocal" />
+  <Target Name="EnsureXamlBinary" BeforeTargets="_GenerateProjectPriConfigurationFiles" DependsOnTargets="MarkupCompilePass2" />
+  <Target Name="GenerateXamlConnections" BeforeTargets="ClCompile" DependsOnTargets="MarkupCompilePass1;MarkupCompilePass2" />
+  <Target Name="AddWinUIXamlReferences" BeforeTargets="MarkupCompilePass1">
+    <ItemGroup>
+      <ReferencePath Include="$(PkgMicrosoft_WindowsAppSDK)\lib\uap10.0\*.winmd">
+        <WinMDFile>true</WinMDFile>
+      </ReferencePath>
+      <ReferencePath Include="$(PkgMicrosoft_WindowsAppSDK)\lib\uap10.0.18362\*.winmd">
+        <WinMDFile>true</WinMDFile>
+      </ReferencePath>
+      <ReferencePath Include="$(WindowsSdkDir)UnionMetadata\$(WindowsTargetPlatformVersion)\Windows.winmd">
+        <WinMDFile>true</WinMDFile>
+      </ReferencePath>
+      <ReferencePath Include="$(WindowsSdkDir)References\$(WindowsTargetPlatformVersion)\Windows.Foundation.FoundationContract\*\Windows.Foundation.FoundationContract.winmd">
+        <WinMDFile>true</WinMDFile>
+      </ReferencePath>
+      <ReferencePath Include="$(WindowsSdkDir)References\$(WindowsTargetPlatformVersion)\Windows.Foundation.UniversalApiContract\*\Windows.Foundation.UniversalApiContract.winmd">
+        <WinMDFile>true</WinMDFile>
+      </ReferencePath>
+    </ItemGroup>
+  </Target>
+  <Target Name="AddWinUIXamlPass2References" BeforeTargets="MarkupCompilePass2">
+    <PropertyGroup>
+      <FacadeWinmdPath>$(WindowsSdkDir)UnionMetadata\$(WindowsTargetPlatformVersion)\Facade\unused.winmd</FacadeWinmdPath>
+    </PropertyGroup>
+    <ItemGroup>
+      <WinMDReferenceToCompile Include="$(PkgMicrosoft_WindowsAppSDK)\lib\uap10.0\*.winmd" />
+      <WinMDReferenceToCompile Include="$(PkgMicrosoft_WindowsAppSDK)\lib\uap10.0.18362\*.winmd" />
+      <WinMDReferenceToCompile Include="$(WindowsSdkDir)References\$(WindowsTargetPlatformVersion)\**\*.winmd" />
+      <WinMDReferenceToCompile Include="$(TargetDir)LayrixEditor.winmd" />
+    </ItemGroup>
+  </Target>
+  <Target Name="AddWinUIFrameworkPri" BeforeTargets="_GetPriFilesFromPayload">
+    <ItemGroup>
+      <PackagingOutputs Include="$(IntermediateOutputPath)MsixContent\Microsoft.UI.Xaml.Controls.pri">
+        <ProjectName>Microsoft.UI.Xaml.Controls</ProjectName>
+        <OutputGroup>Content</OutputGroup>
+      </PackagingOutputs>
+      <PackagingOutputs Include="$(IntermediateOutputPath)MsixContent\Microsoft.UI.pri">
+        <ProjectName>Microsoft.UI</ProjectName>
+        <OutputGroup>Content</OutputGroup>
+      </PackagingOutputs>
+    </ItemGroup>
+  </Target>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

@@ -1,0 +1,8 @@
+namespace LayrixEditor
+{
+    [default_interface]
+    runtimeclass TemplateCard : Microsoft.UI.Xaml.Controls.UserControl
+    {
+        TemplateCard();
+    }
+}

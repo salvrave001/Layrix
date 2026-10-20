@@ -1,0 +1,11 @@
+/bin/
+/obj/
+/dist/
+/.vs/
+/.codex/
+/.agents/
+*.user
+*.suo
+*.lnk
+layouts.json*
+*.log
