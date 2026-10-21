@@ -5,6 +5,7 @@
 #include "app/resource.h"
 #include "engine/Messages.h"
 #include "engine/SnapEngine.h"
+#include "engine/StartupLog.h"
 
 #include <filesystem>
 
@@ -18,6 +19,7 @@ TrayApp::~TrayApp() {
 
 int TrayApp::Run(bool openEditor, bool openSettings) {
     CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+    taskbarCreated_ = RegisterWindowMessageW(L"TaskbarCreated");
 
     WNDCLASSW windowClass{};
     windowClass.lpfnWndProc = WndProc;
@@ -39,7 +41,13 @@ int TrayApp::Run(bool openEditor, bool openSettings) {
         nullptr,
         windowClass.hInstance,
         this);
+    if (!hwnd_) {
+        StartupLog("engine window creation failed: " + std::to_string(GetLastError()));
+        CoUninitialize();
+        return 1;
+    }
     engine_ = std::make_unique<SnapEngine>(hwnd_);
+    StartupLog("engine ready");
     AddTray();
     if (openEditor || openSettings) {
         PostMessageW(hwnd_, kMsgOpenEditor, openSettings ? 1 : 0, 0);
@@ -69,7 +77,18 @@ LRESULT CALLBACK TrayApp::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 }
 
 LRESULT TrayApp::Handle(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    if (taskbarCreated_ && message == taskbarCreated_) {
+        StartupLog("taskbar recreated; registering tray icon again");
+        // Also works for a recovery request when Explorer kept the old icon.
+        if (trayRegistered_) Shell_NotifyIconW(NIM_DELETE, &icon_);
+        trayRegistered_ = false;
+        AddTray();
+        return 0;
+    }
     switch (message) {
+    case WM_DISPLAYCHANGE:
+        if (engine_) engine_->Reload();
+        return 0;
     case kMsgReload:
         if (engine_) engine_->Reload();
         return 0;
@@ -98,6 +117,7 @@ LRESULT TrayApp::Handle(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         }
         return 0;
     case WM_TIMER:
+        if (wParam == kTimerTray) AddTray();
         if (wParam == kTimerSnap && engine_) engine_->FinishPendingSnap();
         if (wParam == kTimerBadge && engine_) engine_->HideBadge();
         if (wParam == kTimerDrag && engine_) engine_->OnDragTick();
@@ -113,15 +133,17 @@ LRESULT TrayApp::Handle(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 }
 
 void TrayApp::AddTray() {
+    if (trayRegistered_ || !hwnd_) return;
     const int width = GetSystemMetrics(SM_CXSMICON);
     const int height = GetSystemMetrics(SM_CYSMICON);
+    const HICON previousIcon = icon_.hIcon;
     icon_ = {};
     icon_.cbSize = sizeof(icon_);
     icon_.hWnd = hwnd_;
     icon_.uID = 1;
     icon_.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
     icon_.uCallbackMessage = kMsgTray;
-    icon_.hIcon = static_cast<HICON>(LoadImageW(
+    icon_.hIcon = previousIcon ? previousIcon : static_cast<HICON>(LoadImageW(
         GetModuleHandleW(nullptr),
         MAKEINTRESOURCEW(IDI_APP),
         IMAGE_ICON,
@@ -132,14 +154,27 @@ void TrayApp::AddTray() {
         icon_.hIcon = LoadIconW(nullptr, IDI_APPLICATION);
     }
     wcscpy_s(icon_.szTip, L"Layrix");
-    Shell_NotifyIconW(NIM_ADD, &icon_);
+    if (Shell_NotifyIconW(NIM_ADD, &icon_)) {
+        trayRegistered_ = true;
+        trayFailureLogged_ = false;
+        KillTimer(hwnd_, kTimerTray);
+        StartupLog("tray icon registered");
+    } else {
+        if (!trayFailureLogged_) {
+            StartupLog("tray unavailable; retrying every 2 seconds, error=" + std::to_string(GetLastError()));
+            trayFailureLogged_ = true;
+        }
+        SetTimer(hwnd_, kTimerTray, 2000, nullptr);
+    }
 }
 
 void TrayApp::RemoveTray() {
+    if (hwnd_) KillTimer(hwnd_, kTimerTray);
     if (icon_.hWnd) {
-        Shell_NotifyIconW(NIM_DELETE, &icon_);
+        if (trayRegistered_) Shell_NotifyIconW(NIM_DELETE, &icon_);
         icon_.hWnd = nullptr;
     }
+    trayRegistered_ = false;
     if (icon_.hIcon) {
         DestroyIcon(icon_.hIcon);
         icon_.hIcon = nullptr;

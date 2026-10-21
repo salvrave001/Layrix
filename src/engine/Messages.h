@@ -19,5 +19,6 @@ constexpr UINT kMsgHotkey = WM_APP + 7;
 constexpr UINT_PTR kTimerSnap = 1;
 constexpr UINT_PTR kTimerBadge = 2;
 constexpr UINT_PTR kTimerDrag = 3;
+constexpr UINT_PTR kTimerTray = 4;
 
 }  // namespace layrix

@@ -161,18 +161,37 @@ int RunSelfTest() {
     const AppSettings defaults = MakeDefaultSettings();
     Check(defaults.FindLayout(L"priority") && defaults.FindLayout(L"none"), "defaults");
 
-    // Exercise the registry implementation in a private key, never Windows Run.
+    // Test migration and real .lnk files in isolated locations, never user Startup.
     const std::wstring startupTestKey = L"Software\\LayrixSelfTest-" + std::to_wstring(GetCurrentProcessId());
-    Check(!ReadStartup(startupTestKey.c_str()).enabled, "startup initially disabled");
-    Check(SetStartup(true, startupTestKey.c_str()) == ERROR_SUCCESS, "enable startup registration");
-    Check(ReadStartup(startupTestKey.c_str()).enabled, "startup registration readback");
-    Check(StartupCommand().front() == L'\"' && StartupCommand().back() == L'\"' &&
-        StartupCommand().find(L"--editor") == std::wstring::npos, "quoted background startup command");
-    Check(SetStartup(false, startupTestKey.c_str()) == ERROR_SUCCESS, "disable startup registration");
-    Check(!ReadStartup(startupTestKey.c_str()).enabled, "startup disabled readback");
-    Check(SetStartup(false, startupTestKey.c_str()) == ERROR_SUCCESS, "disable startup is idempotent");
-    Check(RegDeleteKeyW(HKEY_CURRENT_USER, startupTestKey.c_str()) == ERROR_SUCCESS, "startup test registry cleanup");
-
+    const StartupPaths startupPaths{startupTestKey, root / L"startup" / L"Layrix.lnk"};
+    Check(!ReadStartup(startupPaths).enabled, "startup initially disabled");
+    HKEY startupFixture = nullptr;
+    const auto fixtureCreated = RegCreateKeyExW(HKEY_CURRENT_USER, startupTestKey.c_str(), 0, nullptr,
+        0, KEY_SET_VALUE | KEY_QUERY_VALUE, nullptr, &startupFixture, nullptr);
+    Check(fixtureCreated == ERROR_SUCCESS, "create isolated startup fixture");
+    if (fixtureCreated == ERROR_SUCCESS) {
+        const auto legacyCommand = L"\"" + StartupExecutable().wstring() + L"\"";
+        RegSetValueExW(startupFixture, L"Layrix", 0, REG_SZ, reinterpret_cast<const BYTE*>(legacyCommand.c_str()),
+            static_cast<DWORD>((legacyCommand.size() + 1) * sizeof(wchar_t)));
+        const DWORD keep = 42;
+        RegSetValueExW(startupFixture, L"OtherApplication", 0, REG_DWORD, reinterpret_cast<const BYTE*>(&keep), sizeof(keep));
+        Check(ReadStartup(startupPaths).enabled && ReadStartup(startupPaths).legacy, "recognize legacy Run registration");
+        Check(SetStartup(true, startupPaths) == ERROR_SUCCESS, "migrate to Startup shortcut");
+        const auto migrated = ReadStartup(startupPaths);
+        Check(migrated.enabled && !migrated.legacy, "shortcut target arguments and working directory readback");
+        Check(std::filesystem::exists(startupPaths.shortcut), "Startup shortcut exists");
+        DWORD value = 0, valueSize = sizeof(value);
+        Check(RegQueryValueExW(startupFixture, L"OtherApplication", nullptr, nullptr,
+            reinterpret_cast<BYTE*>(&value), &valueSize) == ERROR_SUCCESS && value == 42, "migration preserves other startup values");
+        Check(RegQueryValueExW(startupFixture, L"Layrix", nullptr, nullptr, nullptr, nullptr) == ERROR_FILE_NOT_FOUND,
+            "migration removes duplicate Run entry");
+        Check(SetStartup(true, startupPaths) == ERROR_SUCCESS, "enable startup is idempotent");
+        Check(SetStartup(false, startupPaths) == ERROR_SUCCESS, "disable startup shortcut");
+        Check(!ReadStartup(startupPaths).enabled && !std::filesystem::exists(startupPaths.shortcut), "startup fully disabled readback");
+        Check(SetStartup(false, startupPaths) == ERROR_SUCCESS, "disable startup is idempotent");
+        RegCloseKey(startupFixture);
+        Check(RegDeleteKeyW(HKEY_CURRENT_USER, startupTestKey.c_str()) == ERROR_SUCCESS, "startup test registry cleanup");
+    }
     if (g_failed == 0) {
         std::cout << "SELFTEST OK\n";
     } else {

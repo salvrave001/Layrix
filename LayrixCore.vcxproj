@@ -67,6 +67,7 @@
     <ClCompile Include="src\engine\LayoutModel.cpp" />
     <ClCompile Include="src\engine\LayoutStore.cpp" />
     <ClCompile Include="src\engine\MonitorService.cpp" />
+    <ClCompile Include="src\engine\StartupRegistration.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\engine\LayoutModel.h" />

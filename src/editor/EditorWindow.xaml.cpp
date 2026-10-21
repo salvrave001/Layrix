@@ -303,10 +303,12 @@ void EditorWindow::SyncStartup() {
     suppress_ = true;
     StartupToggle().IsOn(state.enabled);
     suppress_ = previous;
-    StartupToggle().IsEnabled(state.error == ERROR_SUCCESS);
+    // Leave the switch usable so a broken registration can be repaired.
+    StartupToggle().IsEnabled(true);
     StartupStatus().Text(state.error != ERROR_SUCCESS ?
         hstring{L"Не удалось прочитать настройку автозапуска. Код ошибки: " + std::to_wstring(state.error)} :
-        hstring{state.enabled ? L"Автозапуск включён для текущего пользователя." : L"Автозапуск выключен."});
+        hstring{state.legacy ? L"Старая запись автозапуска: выключите и снова включите переключатель для восстановления." :
+            (state.enabled ? L"Автозапуск настроен через папку «Автозагрузка» текущего пользователя." : L"Автозапуск выключен.")});
 }
 
 bool EditorWindow::ShowSettings(bool show) {

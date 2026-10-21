@@ -19,11 +19,11 @@ Layrix focuses on arranging windows into zones. It is an independent alternative
 - Optional startup with Windows, running quietly in the notification area.
 - Custom highlight color and zone spacing.
 
-The current interface is in Russian. English localization is not included in v1.0.0.
+The current interface is in Russian. English localization is not included in v1.0.1.
 
 ## Download and run
 
-1. Download `Layrix-1.0.0-windows-x64.zip` from [Releases](https://github.com/salvrave001/Layrix/releases).
+1. Download `Layrix-1.0.1-windows-x64.zip` from [Releases](https://github.com/salvrave001/Layrix/releases).
 2. Extract the **entire** archive into a writable folder. Do not run the application from inside the ZIP.
 3. Run `Layrix.exe`. It starts in the notification area.
 4. Double-click its tray icon to open the layout gallery, or right-click it and choose **Редактор зон**.
@@ -48,6 +48,8 @@ Open **Настройки** from the gallery or tray menu. Changes apply immedia
 
 Settings and layouts are stored in `layouts.json` next to `Layrix.exe`; this file is created on first launch. Back it up before upgrading and copy it into the new version's folder. Disable startup before moving or deleting the installation, then enable it again from the new location.
 
+Startup uses `Layrix.lnk` in the current user's Windows Startup folder, with an explicit working directory. Version 1.0.1 migrates the old Run registration when it points to the same executable. Startup diagnostics are stored in `%LOCALAPPDATA%\Layrix\logs\startup.log`. The tray icon is retried if Explorer is not ready and restored when the taskbar is recreated.
+
 ## Limitations
 
 - Windows with a higher integrity level (for example, an administrator app while Layrix runs normally) are skipped.
@@ -62,12 +64,12 @@ Install Visual Studio 2022 / Build Tools with **Desktop development with C++**, 
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/build.ps1
-powershell -ExecutionPolicy Bypass -File scripts/package.ps1 -Version 1.0.0
+powershell -ExecutionPolicy Bypass -File scripts/package.ps1 -Version 1.0.1
 ```
 
 `build.ps1` restores dependencies, builds the editor and engine, and runs `Layrix.exe --self-test`. The package is written to `dist/` and excludes personal layouts, debug symbols, and old executables. GitHub Actions runs the same scripts; pushing a `v*` tag publishes a release after a successful build.
 
-Command-line switches: `--editor`, `--settings`, `--self-test`. Starting without a switch runs the tray engine.
+Command-line switches: `--editor`, `--settings`, `--startup`, `--self-test`. `--startup` runs quietly even if another instance is present. Starting without a switch runs the tray engine.
 
 ## Contributing
 

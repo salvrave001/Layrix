@@ -26,6 +26,9 @@ private:
 
     HWND hwnd_ = nullptr;
     NOTIFYICONDATAW icon_{};
+    UINT taskbarCreated_ = 0;
+    bool trayRegistered_ = false;
+    bool trayFailureLogged_ = false;
     std::unique_ptr<SnapEngine> engine_;
     HMODULE editorModule_ = nullptr;
     void(__stdcall* showEditor_)() = nullptr;

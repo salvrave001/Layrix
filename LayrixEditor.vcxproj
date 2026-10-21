@@ -84,7 +84,7 @@
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>d2d1.lib;dwrite.lib;comctl32.lib;gdi32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d2d1.lib;dwrite.lib;comctl32.lib;gdi32.lib;advapi32.lib;ole32.lib;shell32.lib;uuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation Condition="'$(Configuration)'=='Debug'">true</GenerateDebugInformation>
       <GenerateDebugInformation Condition="'$(Configuration)'=='Release'">false</GenerateDebugInformation>
