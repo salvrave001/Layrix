@@ -35,6 +35,9 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
     if (selfTest) {
         return layrix::RunSelfTest();
     }
+    if (!startup && !openEditor && !openSettings) {
+        openEditor = true;
+    }
     layrix::StartupLog(startup ? "Windows startup launch" : "manual launch");
 
     HANDLE mutex = CreateMutexW(nullptr, TRUE, L"Local\\Layrix");

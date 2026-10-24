@@ -113,9 +113,21 @@
                     <StackPanel Spacing="10">
                         <TextBlock Text="Отображение зон" FontSize="18" FontWeight="SemiBold"/>
                         <ComboBox x:Name="ZoneDisplayCombo" MinWidth="280" HorizontalAlignment="Left">
-                            <ComboBoxItem Content="Невидимые области"/>
-                            <ComboBoxItem Content="Зоны поверх"/>
-                            <ComboBoxItem Content="Зоны на рабочем столе"/>
+                            <ComboBox.Resources>
+                                <SolidColorBrush x:Key="ComboBoxDropDownBackground" Color="#FF2B2B2B"/>
+                                <SolidColorBrush x:Key="AcrylicInAppFillColorDefaultBrush" Color="#FF2B2B2B"/>
+                                <SolidColorBrush x:Key="LayerOnAcrylicFillColorDefaultBrush" Color="#FF2B2B2B"/>
+                                <SolidColorBrush x:Key="ComboBoxItemBackground" Color="#FF2B2B2B"/>
+                                <SolidColorBrush x:Key="ComboBoxItemBackgroundPointerOver" Color="#FF383838"/>
+                                <SolidColorBrush x:Key="ComboBoxItemBackgroundPressed" Color="#FF323232"/>
+                                <SolidColorBrush x:Key="ComboBoxItemBackgroundSelected" Color="#FF333333"/>
+                                <SolidColorBrush x:Key="ComboBoxItemBackgroundSelectedPointerOver" Color="#FF3D3D3D"/>
+                                <SolidColorBrush x:Key="ComboBoxItemBackgroundSelectedPressed" Color="#FF383838"/>
+                                <SolidColorBrush x:Key="ComboBoxItemBackgroundDisabled" Color="#FF2B2B2B"/>
+                            </ComboBox.Resources>
+                            <ComboBoxItem Content="Невидимые области" Background="#FF2B2B2B"/>
+                            <ComboBoxItem Content="Зоны поверх" Background="#FF2B2B2B"/>
+                            <ComboBoxItem Content="Зоны на рабочем столе" Background="#FF2B2B2B"/>
                         </ComboBox>
                         <TextBlock x:Name="ZoneDisplayHint" TextWrapping="Wrap" Foreground="#FFBBBBBB"/>
                     </StackPanel>

@@ -20,13 +20,13 @@ Layrix focuses on arranging windows into zones. It is an independent alternative
 - Optional startup with Windows, running quietly in the notification area.
 - Customizable snap-hold key, zone highlight, and app accent (Windows accent by default).
 
-The current interface is in Russian. English localization is not included in v1.0.2.
+The current interface is in Russian. English localization is not included in v1.0.3.
 
 ## Download and run
 
-1. Download `Layrix-1.0.2-windows-x64.zip` from [Releases](https://github.com/salvrave001/Layrix/releases).
+1. Download `Layrix-1.0.3-windows-x64.zip` from [Releases](https://github.com/salvrave001/Layrix/releases).
 2. Extract the **entire** archive into a writable folder. Do not run the application from inside the ZIP.
-3. Run `Layrix.exe`. It starts in the notification area.
+3. Run `Layrix.exe`. The editor opens; the app also stays in the notification area. A Windows Startup launch stays in the tray only.
 4. Double-click its tray icon to open the layout gallery, or right-click it and choose **Редактор зон**.
 
 Windows 10 version 1809 or later, or Windows 11, **x64**. ARM64 and x86 builds are not provided. The portable archive includes the Windows App SDK runtime and the Visual C++ runtime DLLs. Keep the included DLLs and language folders next to the executable.
@@ -67,7 +67,7 @@ Install Visual Studio 2022 / Build Tools with **Desktop development with C++**, 
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/build.ps1
-powershell -ExecutionPolicy Bypass -File scripts/package.ps1 -Version 1.0.2
+powershell -ExecutionPolicy Bypass -File scripts/package.ps1 -Version 1.0.3
 ```
 
 `build.ps1` restores dependencies, builds the editor and engine, and runs `Layrix.exe --self-test`. The package is written to `dist/` and excludes personal layouts, debug symbols, and old executables. GitHub Actions runs the same scripts; pushing a `v*` tag publishes a release after a successful build.

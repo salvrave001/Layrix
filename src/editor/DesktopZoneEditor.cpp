@@ -17,6 +17,8 @@ struct DesktopZoneEditor::ToolsUi {
     winrt::Microsoft::UI::Xaml::Controls::TextBox name{nullptr};
     winrt::Microsoft::UI::Xaml::Controls::TextBlock counter{nullptr};
     winrt::Microsoft::UI::Xaml::Controls::Button splitX{nullptr}, splitY{nullptr}, remove{nullptr}, save{nullptr}, cancel{nullptr};
+    winrt::Microsoft::UI::Composition::SystemBackdrops::DesktopAcrylicController acrylic{nullptr};
+    winrt::Microsoft::UI::Composition::SystemBackdrops::SystemBackdropConfiguration backdropConfig{nullptr};
     bool closing = false;
 };
 
@@ -80,19 +82,56 @@ bool DesktopZoneEditor::Open(HWND owner, RECT work, std::wstring name, std::vect
     ui.window.Title(L"Layrix · Редактирование зон");
     ui.window.ExtendsContentIntoTitleBar(true);
 
-    auto brush = [](uint8_t r, uint8_t g, uint8_t b) {
-        return xaml::Media::SolidColorBrush(winrt::Windows::UI::ColorHelper::FromArgb(255, r, g, b));
+    auto brush = [](uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255) {
+        return xaml::Media::SolidColorBrush(winrt::Windows::UI::ColorHelper::FromArgb(a, r, g, b));
     };
+    auto pill = [&](Button const& control) {
+        control.Height(36);
+        control.Padding(Thickness{14, 0, 14, 0});
+        control.CornerRadius({16, 16, 16, 16});
+        control.Background(brush(43, 43, 43, 230));
+        control.Foreground(brush(243, 243, 243));
+        control.BorderBrush(brush(255, 255, 255, 38));
+        control.BorderThickness(Thickness{1, 1, 1, 1});
+    };
+    try {
+        namespace backdrops = winrt::Microsoft::UI::Composition::SystemBackdrops;
+        if (backdrops::DesktopAcrylicController::IsSupported()) {
+            ui.backdropConfig = backdrops::SystemBackdropConfiguration();
+            ui.backdropConfig.IsInputActive(true);
+            ui.backdropConfig.Theme(backdrops::SystemBackdropTheme::Dark);
+            ui.window.Activated([&ui](auto&&, WindowActivatedEventArgs const& args) {
+                if (ui.backdropConfig) {
+                    ui.backdropConfig.IsInputActive(
+                        args.WindowActivationState() != WindowActivationState::Deactivated);
+                }
+            });
+            ui.acrylic = backdrops::DesktopAcrylicController();
+            ui.acrylic.TintColor(winrt::Windows::UI::ColorHelper::FromArgb(255, 18, 18, 18));
+            ui.acrylic.TintOpacity(0.28f);
+            ui.acrylic.LuminosityOpacity(0.52f);
+            ui.acrylic.SetSystemBackdropConfiguration(ui.backdropConfig);
+            ui.acrylic.AddSystemBackdropTarget(
+                ui.window.try_as<winrt::Microsoft::UI::Composition::ICompositionSupportsSystemBackdrop>());
+        } else {
+            ui.window.SystemBackdrop(xaml::Media::DesktopAcrylicBackdrop());
+        }
+    } catch (...) {
+        try {
+            ui.window.SystemBackdrop(xaml::Media::DesktopAcrylicBackdrop());
+        } catch (...) {
+        }
+    }
     Grid root;
     root.RequestedTheme(ElementTheme::Dark);
-    root.Background(brush(32, 32, 32));
+    root.Background(brush(0, 0, 0, 0));
     for (int height : {40, 72, 60}) {
         RowDefinition row;
         row.Height(GridLengthHelper::FromPixels(height));
         root.RowDefinitions().Append(row);
     }
     Grid title;
-    title.Background(brush(32, 32, 32));
+    title.Background(brush(0, 0, 0, 0));
     title.Margin(Thickness{16, 0, 54, 0});
     StackPanel heading;
     heading.Orientation(Orientation::Horizontal);
@@ -101,7 +140,7 @@ bool DesktopZoneEditor::Open(HWND owner, RECT work, std::wstring name, std::vect
     FontIcon icon;
     icon.Glyph(L"\xE8A9");
     icon.FontSize(16);
-    icon.Foreground(brush(76, 194, 255));
+    icon.Foreground(brush(229, 229, 229));
     TextBlock titleText;
     titleText.Text(L"Редактирование зон");
     titleText.FontSize(14);
@@ -133,7 +172,9 @@ bool DesktopZoneEditor::Open(HWND owner, RECT work, std::wstring name, std::vect
     ui.name = TextBox();
     ui.name.Text(name_);
     ui.name.PlaceholderText(L"Свой макет");
-    ui.name.CornerRadius({6, 6, 6, 6});
+    ui.name.CornerRadius({12, 12, 12, 12});
+    ui.name.Background(brush(43, 43, 43, 200));
+    ui.name.BorderBrush(brush(255, 255, 255, 38));
     nameGroup.Children().Append(nameLabel);
     nameGroup.Children().Append(ui.name);
     details.Children().Append(nameGroup);
@@ -164,9 +205,7 @@ bool DesktopZoneEditor::Open(HWND owner, RECT work, std::wstring name, std::vect
     auto button = [&](const wchar_t* label, int command) {
         Button control;
         control.Content(box_value(hstring{label}));
-        control.Height(36);
-        control.Padding(Thickness{14, 0, 14, 0});
-        control.CornerRadius({6, 6, 6, 6});
+        pill(control);
         control.Click([this, command](auto&&, auto&&) { Command(command); });
         return control;
     };
@@ -179,8 +218,6 @@ bool DesktopZoneEditor::Open(HWND owner, RECT work, std::wstring name, std::vect
     editing.Children().Append(ui.remove);
     ui.cancel = button(L"Отмена · Esc", Cancel);
     ui.save = button(L"Сохранить", Save);
-    ui.save.Background(brush(76, 194, 255));
-    ui.save.Foreground(brush(6, 32, 51));
     ToolTipService::SetToolTip(ui.save, box_value(L"Сохранить · Ctrl + S"));
     finishing.Children().Append(ui.cancel);
     finishing.Children().Append(ui.save);
@@ -211,8 +248,11 @@ bool DesktopZoneEditor::Open(HWND owner, RECT work, std::wstring name, std::vect
     auto appWindow = ui.window.AppWindow();
     auto titleBar = appWindow.TitleBar();
     titleBar.ButtonBackgroundColor(winrt::Windows::UI::ColorHelper::FromArgb(0, 0, 0, 0));
+    titleBar.ButtonInactiveBackgroundColor(winrt::Windows::UI::ColorHelper::FromArgb(0, 0, 0, 0));
     titleBar.ButtonForegroundColor(winrt::Windows::UI::ColorHelper::FromArgb(255, 230, 230, 230));
-    titleBar.ButtonHoverBackgroundColor(winrt::Windows::UI::ColorHelper::FromArgb(255, 60, 60, 60));
+    titleBar.ButtonHoverBackgroundColor(winrt::Windows::UI::ColorHelper::FromArgb(40, 255, 255, 255));
+    titleBar.ButtonPressedBackgroundColor(winrt::Windows::UI::ColorHelper::FromArgb(70, 255, 255, 255));
+    titleBar.ButtonHoverForegroundColor(winrt::Windows::UI::ColorHelper::FromArgb(255, 255, 255, 255));
     if (auto presenter = appWindow.Presenter().try_as<winrt::Microsoft::UI::Windowing::OverlappedPresenter>()) {
         presenter.IsResizable(false);
         presenter.IsMaximizable(false);
@@ -241,6 +281,10 @@ void DesktopZoneEditor::Close() {
     name_ = Name();
     mode_ = Mode::None;
     if (tools_) {
+        if (tools_->acrylic) {
+            tools_->acrylic.Close();
+            tools_->acrylic = nullptr;
+        }
         if (!tools_->closing) {
             tools_->closing = true;
             tools_->window.Close();
@@ -410,8 +454,8 @@ void DesktopZoneEditor::Render() {
             const auto number = std::to_wstring(i + 1);
             brush->SetColor(D2D1::ColorF(1, 1, 1, 1));
             const float cx = (r.left + r.right) / 2, cy = (r.top + r.bottom) / 2;
-            brush->SetColor(D2D1::ColorF(0.03f, 0.08f, 0.12f, 0.9f));
-            target_->FillRoundedRectangle(D2D1::RoundedRect(D2D1::RectF(cx - 26, cy - 24, cx + 26, cy + 24), 8, 8), brush.Get());
+            brush->SetColor(D2D1::ColorF(0.17f, 0.17f, 0.17f, 0.92f));
+            target_->FillRoundedRectangle(D2D1::RoundedRect(D2D1::RectF(cx - 26, cy - 24, cx + 26, cy + 24), 12, 12), brush.Get());
             brush->SetColor(D2D1::ColorF(1, 1, 1, 1));
             target_->DrawText(number.c_str(), static_cast<UINT32>(number.size()), text.Get(), D2D1::RectF(cx - 26, cy - 24, cx + 26, cy + 24), brush.Get());
         }

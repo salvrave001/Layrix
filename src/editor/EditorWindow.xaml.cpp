@@ -574,6 +574,16 @@ void EditorWindow::ApplyTheme() {
         PutResource(resources, L"AccentFillColorSecondaryBrush", SolidColorBrush(light1));
         PutResource(resources, L"AccentFillColorTertiaryBrush", SolidColorBrush(light2));
         PutResource(resources, L"AccentTextFillColorPrimaryBrush", SolidColorBrush(accent));
+        const auto menu = SolidColorBrush(ColorHelper::FromArgb(255, 43, 43, 43));
+        const auto menuHover = SolidColorBrush(ColorHelper::FromArgb(255, 56, 56, 56));
+        PutResource(resources, L"ComboBoxDropDownBackground", menu);
+        PutResource(resources, L"ComboBoxItemBackground", menu);
+        PutResource(resources, L"ComboBoxItemBackgroundPointerOver", menuHover);
+        PutResource(resources, L"ComboBoxItemBackgroundPressed", SolidColorBrush(ColorHelper::FromArgb(255, 50, 50, 50)));
+        PutResource(resources, L"ComboBoxItemBackgroundSelected", SolidColorBrush(ColorHelper::FromArgb(255, 51, 51, 51)));
+        PutResource(resources, L"ComboBoxItemBackgroundSelectedPointerOver", SolidColorBrush(ColorHelper::FromArgb(255, 61, 61, 61)));
+        PutResource(resources, L"ComboBoxItemBackgroundSelectedPressed", menuHover);
+        PutResource(resources, L"ComboBoxItemBackgroundDisabled", menu);
     } catch (...) {
     }
 }
