@@ -73,10 +73,10 @@ void CanvasEditor::BuildUi() {
     zoneCanvas_ = Canvas();
     zoneCanvas_.IsHitTestVisible(false);
     surface_ = Border();
-    surface_.Background(Paint(20, 20, 20));
-    surface_.BorderBrush(Paint(51, 51, 51));
+    surface_.Background(Paint(28, 28, 28, 150));
+    surface_.BorderBrush(Paint(255, 255, 255, 40));
     surface_.BorderThickness(Thickness{1, 1, 1, 1});
-    surface_.CornerRadius(winrt::Microsoft::UI::Xaml::CornerRadius(10.0));
+    surface_.CornerRadius(winrt::Microsoft::UI::Xaml::CornerRadius(16.0));
     surface_.Child(zoneCanvas_);
     Grid::SetRow(surface_, 1);
     root.Children().Append(surface_);
@@ -85,20 +85,26 @@ void CanvasEditor::BuildUi() {
     buttons.Orientation(Orientation::Horizontal);
     buttons.HorizontalAlignment(HorizontalAlignment::Right);
     buttons.Spacing(8);
+    auto stylePill = [](Button const& button) {
+        button.Height(36);
+        button.Background(Paint(43, 43, 43, 230));
+        button.Foreground(Paint(243, 243, 243));
+        button.BorderBrush(Paint(255, 255, 255, 38));
+        button.BorderThickness(Thickness{1, 1, 1, 1});
+        button.CornerRadius(winrt::Microsoft::UI::Xaml::CornerRadius(16.0));
+    };
     deleteButton_ = Button();
     deleteButton_.Content(box_value(hstring{L"Удалить макет"}));
-    deleteButton_.Height(36);
     deleteButton_.Padding(Thickness{14, 0, 14, 0});
+    stylePill(deleteButton_);
     cancelButton_ = Button();
     cancelButton_.Content(box_value(hstring{L"Отмена"}));
-    cancelButton_.Height(36);
     cancelButton_.Padding(Thickness{14, 0, 14, 0});
+    stylePill(cancelButton_);
     saveButton_ = Button();
     saveButton_.Content(box_value(hstring{L"Сохранить"}));
-    saveButton_.Height(36);
     saveButton_.Padding(Thickness{16, 0, 16, 0});
-    saveButton_.Background(Paint(76, 194, 255));
-    saveButton_.Foreground(Paint(6, 32, 51));
+    stylePill(saveButton_);
     buttons.Children().Append(deleteButton_);
     buttons.Children().Append(cancelButton_);
     buttons.Children().Append(saveButton_);
@@ -107,6 +113,8 @@ void CanvasEditor::BuildUi() {
     tools.Spacing(8);
     Button add;
     add.Content(box_value(hstring{L"+ Зона"}));
+    add.Padding(Thickness{14, 0, 14, 0});
+    stylePill(add);
     add.Click([this](auto&&, auto&&) {
         zones_.push_back({0.25, 0.25, 0.5, 0.5});
         selected_ = static_cast<int>(zones_.size()) - 1;
@@ -117,6 +125,8 @@ void CanvasEditor::BuildUi() {
     for (bool vertical : {true, false}) {
         Button split;
         split.Content(box_value(hstring{vertical ? L"Разделить ↔" : L"Разделить ↕"}));
+        split.Padding(Thickness{14, 0, 14, 0});
+        stylePill(split);
         split.Click([this, vertical](auto&&, auto&&) {
             if (selected_ < 0 || selected_ >= static_cast<int>(zones_.size())) return;
             auto zone = zones_[static_cast<size_t>(selected_)];
@@ -414,10 +424,10 @@ void CanvasEditor::Rebuild() {
         box.IsHitTestVisible(false);
         box.Width(std::max(2.0, zone.w * width));
         box.Height(std::max(2.0, zone.h * height));
-        box.CornerRadius({6, 6, 6, 6});
-        box.Background(Paint(46, 46, 46));
+        box.CornerRadius({8, 8, 8, 8});
+        box.Background(Paint(40, 40, 40, 160));
         const bool selected = index == selected_;
-        box.BorderBrush(selected ? Paint(76, 194, 255) : Paint(110, 110, 110));
+        box.BorderBrush(selected ? Paint(230, 230, 230, 180) : Paint(255, 255, 255, 48));
         const double border = selected ? 2.0 : 1.0;
         box.BorderThickness(Thickness{border, border, border, border});
         TextBlock label;

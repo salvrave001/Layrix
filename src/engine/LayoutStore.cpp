@@ -143,11 +143,29 @@ AppSettings LayoutStore::LoadUnlocked() {
         if (document.contains("highlightColor")) {
             settings.highlightColor = FromUtf8(document["highlightColor"].get<std::string>());
         }
+        if (document.contains("accentColor")) {
+            settings.accentColor = FromUtf8(document["accentColor"].get<std::string>());
+        }
         if (document.contains("overrideWinArrows")) {
             settings.overrideWinArrows = document["overrideWinArrows"].get<bool>();
         }
         if (document.contains("zonesEnabled")) {
             settings.zonesEnabled = document["zonesEnabled"].get<bool>();
+        }
+        if (document.contains("zoneDisplay")) {
+            if (const auto mode = ZoneDisplayFromString(FromUtf8(document["zoneDisplay"].get<std::string>()))) {
+                settings.zoneDisplay = *mode;
+            }
+        } else if (document.contains("showZonesOnTop")) {
+            settings.zoneDisplay = document["showZonesOnTop"].get<bool>()
+                ? ZoneDisplayMode::OnTop
+                : ZoneDisplayMode::Hidden;
+        }
+        if (document.contains("snapHold")) {
+            KeyChord parsed{};
+            if (ParseKeyChord(FromUtf8(document["snapHold"].get<std::string>()), parsed)) {
+                settings.snapHold = parsed;
+            }
         }
         if (document.contains("layouts")) {
             for (const auto& item : document["layouts"]) {
@@ -183,10 +201,16 @@ AppSettings LayoutStore::LoadUnlocked() {
                 settings.monitorLayouts.emplace_back(FromUtf8(it.key()), FromUtf8(it.value().get<std::string>()));
             }
         }
-        COLORREF parsed = 0;
-        if (!ParseHexColor(settings.highlightColor, parsed)) {
-            settings.highlightColor = L"#4CC2FF";
+        const bool legacyDefault =
+            !document.contains("accentColor") &&
+            (settings.highlightColor.empty() ||
+                settings.highlightColor == L"#4CC2FF" ||
+                settings.highlightColor == L"#4cc2ff");
+        if (legacyDefault) {
+            settings.highlightColor = std::wstring(kSystemColor);
         }
+        settings.highlightColor = NormalizeColorSetting(settings.highlightColor);
+        settings.accentColor = NormalizeColorSetting(settings.accentColor);
         if (settings.layouts.empty()) {
             throw std::runtime_error("empty");
         }
@@ -227,8 +251,11 @@ void LayoutStore::SaveUnlocked(const AppSettings& settings) {
     }
     const nlohmann::json document = {
         {"highlightColor", ToUtf8(settings.highlightColor)},
+        {"accentColor", ToUtf8(settings.accentColor)},
         {"overrideWinArrows", settings.overrideWinArrows},
         {"zonesEnabled", settings.zonesEnabled},
+        {"zoneDisplay", ToUtf8(ZoneDisplayToString(settings.zoneDisplay))},
+        {"snapHold", ToUtf8(FormatKeyChord(settings.snapHold))},
         {"layouts", std::move(layouts)},
         {"monitors", std::move(monitors)},
     };

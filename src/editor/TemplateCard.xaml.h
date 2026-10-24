@@ -13,6 +13,7 @@ struct TemplateCard : TemplateCardT<TemplateCard> {
     void SetTitle(winrt::hstring const& title);
     void SetZones(std::vector<layrix::NormRect> const& zones);
     void SetSelected(bool selected);
+    void SetAccent(winrt::Windows::UI::Color color);
     void SetOnClick(std::function<void()> callback);
     void SetOnEdit(std::function<void()> callback);
 
@@ -21,6 +22,7 @@ private:
     bool IsEditSource(winrt::Windows::Foundation::IInspectable const& source);
 
     std::vector<layrix::NormRect> zones_;
+    winrt::Windows::UI::Color accent_{255, 76, 194, 255};
     bool selected_ = false;
     std::function<void()> onClick_;
     std::function<void()> onEdit_;

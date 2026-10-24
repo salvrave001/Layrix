@@ -42,6 +42,8 @@ private:
     void UpdateHover(POINT point);
     void Paint();
     void HideOverlays();
+    void RefreshOverlays();
+    COLORREF ZoneColor() const;
     void InstallMouse();
     void RemoveMouse();
     void SnapWindow(HWND hwnd, const RECT& rect) const;

@@ -84,7 +84,7 @@
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>d2d1.lib;dwrite.lib;comctl32.lib;gdi32.lib;advapi32.lib;ole32.lib;shell32.lib;uuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d2d1.lib;dwrite.lib;dwmapi.lib;comctl32.lib;gdi32.lib;advapi32.lib;ole32.lib;shell32.lib;uuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation Condition="'$(Configuration)'=='Debug'">true</GenerateDebugInformation>
       <GenerateDebugInformation Condition="'$(Configuration)'=='Release'">false</GenerateDebugInformation>
@@ -99,6 +99,7 @@
     <ClCompile Include="src\editor\TemplateCard.xaml.cpp" />
     <ClCompile Include="src\editor\CanvasEditor.xaml.cpp" />
     <ClCompile Include="src\editor\DesktopZoneEditor.cpp" />
+    <ClCompile Include="src\editor\ColorPickerWindow.cpp" />
     <ClCompile Include="src\editor\EditorExport.cpp" />
     <ClCompile Include="src\editor\XamlConnect.cpp" />
     <ClCompile Include="src\editor\XamlTypeFactory.cpp" />
@@ -112,6 +113,7 @@
     <ClInclude Include="src\editor\TemplateCard.xaml.h" />
     <ClInclude Include="src\editor\CanvasEditor.xaml.h" />
     <ClInclude Include="src\editor\DesktopZoneEditor.h" />
+    <ClInclude Include="src\editor\ColorPickerWindow.h" />
     <ClInclude Include="src\editor\XamlMetaDataProvider.h" />
   </ItemGroup>
   <ItemGroup>

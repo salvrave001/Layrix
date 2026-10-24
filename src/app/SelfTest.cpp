@@ -119,6 +119,12 @@ int RunSelfTest() {
     Check(ParseHexColor(L"#4CC2FF", color) && GetRValue(color) == 76 && GetGValue(color) == 194 && GetBValue(color) == 255, "color");
     Check(ColorToHex(color) == L"#4CC2FF", "color hex");
     Check(!ParseHexColor(L"blue", color), "bad color");
+    Check(ParseHexColor(L"#4C2", color) && GetRValue(color) == 68 && GetGValue(color) == 204 && GetBValue(color) == 34, "short hex");
+    Check(ParseColor(L"rgb(12, 34, 56)", color) && GetRValue(color) == 12 && GetGValue(color) == 34 && GetBValue(color) == 56, "rgb()");
+    Check(ParseColor(L"12,34,56", color) && GetBValue(color) == 56, "rgb list");
+    Check(IsSystemColorToken(L"system") && IsSystemColorToken(L"") && IsSystemColorToken(L"Windows"), "system token");
+    Check(ResolveColor(L"system") == SystemAccentColor(), "resolve system");
+    Check(NormalizeColorSetting(L"rgb(0, 120, 212)") == L"#0078D4", "normalize rgb");
 
     AppSettings names;
     names.layouts.push_back(Layout{L"custom-1", L"Свой макет 1", LayoutType::Canvas, 1, 1, 8, {}, false});
@@ -137,14 +143,19 @@ int RunSelfTest() {
     LayoutStore store(root / L"layouts.json");
     AppSettings saved = MakeDefaultSettings();
     saved.highlightColor = L"#3DDC97";
+    saved.accentColor = L"#FF7A59";
     saved.overrideWinArrows = false;
+    saved.zoneDisplay = ZoneDisplayMode::OnDesktop;
+    saved.snapHold.shift = false;
+    saved.snapHold.ctrl = true;
     Layout custom{L"custom-9", L"Мой макет", LayoutType::Canvas, 1, 1, 12, {{0.2, 0.2, 0.5, 0.5}}, false};
     saved.layouts.push_back(custom);
     saved.SetMonitorLayout(L"\\\\.\\DISPLAY9|10x10", L"custom-9");
     store.Save(saved);
     const AppSettings loaded = store.Load();
     const Layout* found = loaded.FindLayout(L"custom-9");
-    Check(loaded.highlightColor == L"#3DDC97" && !loaded.overrideWinArrows, "json settings");
+    Check(loaded.highlightColor == L"#3DDC97" && loaded.accentColor == L"#FF7A59" && !loaded.overrideWinArrows && loaded.zoneDisplay == ZoneDisplayMode::OnDesktop, "json settings");
+    Check(loaded.snapHold.ctrl && !loaded.snapHold.shift && FormatKeyChord(loaded.snapHold) == L"Ctrl", "json snap hold");
     Check(found && found->name == L"Мой макет" && found->zones.size() == 1 && found->spacing == 12, "json canvas");
     Check(loaded.LayoutForMonitor(L"\\\\.\\DISPLAY9|10x10", L"\\\\.\\DISPLAY9") == L"custom-9", "json monitor");
     Check(loaded.FindLayout(L"columns") != nullptr, "builtins kept");
@@ -160,6 +171,13 @@ int RunSelfTest() {
 
     const AppSettings defaults = MakeDefaultSettings();
     Check(defaults.FindLayout(L"priority") && defaults.FindLayout(L"none"), "defaults");
+    Check(IsSystemColorToken(defaults.highlightColor) && IsSystemColorToken(defaults.accentColor) && defaults.zoneDisplay == ZoneDisplayMode::OnTop, "default colors");
+    Check(ZoneDisplayFromString(L"hidden") == ZoneDisplayMode::Hidden && ZoneDisplayToString(ZoneDisplayMode::OnDesktop) == L"desktop", "zone display");
+    Check(defaults.snapHold.shift && !defaults.snapHold.ctrl && FormatKeyChord(defaults.snapHold) == L"Shift", "default snap hold");
+    KeyChord parsed{};
+    Check(ParseKeyChord(L"Ctrl+Alt+Z", parsed) && parsed.ctrl && parsed.alt && parsed.vk == 'Z', "parse chord");
+    Check(FormatKeyChord(parsed) == L"Ctrl + Alt + Z", "format chord");
+    Check(!ParseKeyChord(L"", parsed), "empty chord");
 
     // Test migration and real .lnk files in isolated locations, never user Startup.
     const std::wstring startupTestKey = L"Software\\LayrixSelfTest-" + std::to_wstring(GetCurrentProcessId());

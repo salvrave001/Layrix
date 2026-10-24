@@ -30,10 +30,10 @@ TemplateCard::TemplateCard() {
         if (onEdit_) onEdit_();
     });
     PointerEntered([this](auto&&, auto&&) {
-        if (!selected_) Card().Background(Paint(62, 62, 62));
+        if (!selected_) Card().Background(Paint(70, 70, 70, 180));
     });
     PointerExited([this](auto&&, auto&&) {
-        if (!selected_) Card().Background(Paint(51, 51, 51));
+        if (!selected_) Card().Background(Paint(51, 51, 51, 153));
     });
 }
 
@@ -46,13 +46,20 @@ void TemplateCard::SetZones(std::vector<layrix::NormRect> const& zones) {
     Redraw();
 }
 
+void TemplateCard::SetAccent(Windows::UI::Color color) {
+    accent_ = color;
+    if (selected_) {
+        SetSelected(true);
+    }
+}
+
 void TemplateCard::SetSelected(bool selected) {
     selected_ = selected;
-    Card().BorderBrush(selected ? Paint(76, 194, 255) : Paint(58, 58, 58));
-    const double border = selected ? 2.0 : 1.0;
+    Card().BorderBrush(selected ? SolidColorBrush(accent_) : Paint(255, 255, 255, 51));
+    const double border = selected ? 1.5 : 1.0;
     Card().BorderThickness(Thickness{border, border, border, border});
-    Card().Background(Paint(51, 51, 51));
-    TitleText().Foreground(selected ? Paint(76, 194, 255) : Paint(245, 245, 245));
+    Card().Background(Paint(51, 51, 51, 153));
+    TitleText().Foreground(Paint(245, 245, 245));
 }
 
 void TemplateCard::SetOnClick(std::function<void()> callback) {

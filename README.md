@@ -8,22 +8,23 @@ Layrix focuses on arranging windows into zones. It is an independent alternative
 
 ## Features
 
-- Hold **Shift** while dragging a window to reveal zones; release the mouse to snap it.
-- Hold **Shift + Ctrl** to select several zones on one monitor.
+- Hold the snap key (Shift by default) while dragging a window to reveal zones; release the mouse to snap it.
+- Hold the extra modifier (Ctrl by default) to select several zones on one monitor.
 - Move the active window between zones with **Win + Left / Right**.
 - Edit zones directly on your desktop: move, resize, split, add, and remove them.
 - Resize shared borders together, including borders between one large and several smaller zones.
 - Assign different layouts to different monitors.
 - Built-in layouts: focus, columns, rows, grid, and priority grid, plus custom layouts.
-- Dark WinUI editor and floating editing toolbar.
+- Glass WinUI editor, dark action buttons, and a gear icon for settings.
+- Zone display modes: hidden, on top while snapping, or on the desktop.
 - Optional startup with Windows, running quietly in the notification area.
-- Custom highlight color and zone spacing.
+- Customizable snap-hold key, zone highlight, and app accent (Windows accent by default).
 
-The current interface is in Russian. English localization is not included in v1.0.1.
+The current interface is in Russian. English localization is not included in v1.0.2.
 
 ## Download and run
 
-1. Download `Layrix-1.0.1-windows-x64.zip` from [Releases](https://github.com/salvrave001/Layrix/releases).
+1. Download `Layrix-1.0.2-windows-x64.zip` from [Releases](https://github.com/salvrave001/Layrix/releases).
 2. Extract the **entire** archive into a writable folder. Do not run the application from inside the ZIP.
 3. Run `Layrix.exe`. It starts in the notification area.
 4. Double-click its tray icon to open the layout gallery, or right-click it and choose **Редактор зон**.
@@ -40,10 +41,12 @@ Drag a zone or its edges. Draw in an empty area to add a zone, or use the floati
 
 ## Settings
 
-Open **Настройки** from the gallery or tray menu. Changes apply immediately.
+Open settings from the gear in the editor title bar or from the tray menu. Changes apply immediately.
 
 - **Запускать вместе с Windows**: startup for the current Windows user. Off by default; no editor window opens at sign-in.
-- **Привязка окон к зонам**: enable or disable snapping.
+- **Привязка окон к зонам**: enable or disable snapping, and edit the snap-hold key.
+- **Отображение зон**: hidden, on top during snap, or on the desktop.
+- **Цвет зон** / **Цвет акцентов приложения**: Windows accent by default, or a custom color from the palette.
 - **Win + Left / Right**: enable or disable arrow-key interception.
 
 Settings and layouts are stored in `layouts.json` next to `Layrix.exe`; this file is created on first launch. Back it up before upgrading and copy it into the new version's folder. Disable startup before moving or deleting the installation, then enable it again from the new location.
@@ -64,7 +67,7 @@ Install Visual Studio 2022 / Build Tools with **Desktop development with C++**, 
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/build.ps1
-powershell -ExecutionPolicy Bypass -File scripts/package.ps1 -Version 1.0.1
+powershell -ExecutionPolicy Bypass -File scripts/package.ps1 -Version 1.0.2
 ```
 
 `build.ps1` restores dependencies, builds the editor and engine, and runs `Layrix.exe --self-test`. The package is written to `dist/` and excludes personal layouts, debug symbols, and old executables. GitHub Actions runs the same scripts; pushing a `v*` tag publishes a release after a successful build.

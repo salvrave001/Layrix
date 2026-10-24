@@ -3,6 +3,7 @@
 #include "EditorWindow.g.h"
 #include "engine/LayoutStore.h"
 #include "engine/MonitorService.h"
+#include "ColorPickerWindow.h"
 
 #include <string>
 #include <memory>
@@ -32,10 +33,30 @@ private:
     void SaveCanvas();
     void DeleteCanvas();
     void CommitSpacing();
-    void CommitColor();
+    void ApplyTheme();
+    void EnableGlassBackdrop();
     void NotifyEngine() const;
     void FlashSelected() const;
     std::wstring AssignedId() const;
+    winrt::Windows::UI::Color ToUiColor(COLORREF color) const;
+
+    struct ColorEditor {
+        winrt::Microsoft::UI::Xaml::Controls::Button preview{nullptr};
+        winrt::Microsoft::UI::Xaml::Controls::TextBox hex{nullptr};
+        winrt::Microsoft::UI::Xaml::Controls::Button palette{nullptr};
+    };
+
+    void BuildColorEditor(ColorEditor& editor, winrt::Microsoft::UI::Xaml::Controls::StackPanel const& host, bool zone);
+    void SyncColorEditor(ColorEditor& editor, std::wstring const& stored, bool systemOn);
+    void CommitCustomColor(bool zone, std::wstring const& text);
+    void OpenColorPicker(bool zone);
+    HWND NativeHandle() const;
+    POINT ColorPickerAnchor(bool zone) const;
+    void SyncSnapHold();
+    void BeginSnapHoldCapture();
+    void CancelSnapHoldCapture();
+    void CommitSnapHold(layrix::KeyChord chord);
+    bool HandleSnapHoldCapture(winrt::Microsoft::UI::Xaml::Input::KeyRoutedEventArgs const& args);
 
     layrix::LayoutStore store_;
     layrix::AppSettings settings_;
@@ -43,10 +64,15 @@ private:
     std::unique_ptr<layrix::DesktopZoneEditor> desktopEditor_;
     int draftSpacing_ = 8;
     Microsoft::UI::Xaml::Controls::Slider spacingSlider_{nullptr};
-    Microsoft::UI::Xaml::Controls::TextBox colorBox_{nullptr};
     Microsoft::UI::Xaml::Controls::ToggleSwitch winArrowSwitch_{nullptr};
+    ColorEditor zoneColorEditor_;
+    ColorEditor accentColorEditor_;
+    std::unique_ptr<layrix::ColorPickerWindow> colorPicker_;
+    winrt::Microsoft::UI::Composition::SystemBackdrops::DesktopAcrylicController acrylic_{nullptr};
+    winrt::Microsoft::UI::Composition::SystemBackdrops::SystemBackdropConfiguration backdropConfig_{nullptr};
     int selected_ = 0;
     bool suppress_ = false;
+    bool capturingSnapHold_ = false;
     bool editing_ = false;
     bool draftNew_ = false;
     std::wstring draftId_;

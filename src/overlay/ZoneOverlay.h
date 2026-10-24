@@ -16,7 +16,7 @@ public:
     ZoneOverlay();
     ~ZoneOverlay();
 
-    void Show(const RECT& work, const std::vector<RECT>& zones, const std::optional<RECT>& highlight, COLORREF accent);
+    void Show(const RECT& work, const std::vector<RECT>& zones, const std::optional<RECT>& highlight, COLORREF accent, bool topmost = true);
     void Hide();
 
 private:

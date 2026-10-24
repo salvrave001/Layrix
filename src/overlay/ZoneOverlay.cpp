@@ -159,7 +159,7 @@ bool ZoneOverlay::EnsureSurface(int width, int height) {
     return true;
 }
 
-void ZoneOverlay::Show(const RECT& work, const std::vector<RECT>& zones, const std::optional<RECT>& highlight, COLORREF accent) {
+void ZoneOverlay::Show(const RECT& work, const std::vector<RECT>& zones, const std::optional<RECT>& highlight, COLORREF accent, bool topmost) {
     const int width = work.right - work.left;
     const int height = work.bottom - work.top;
     if (!EnsureWindow() || !EnsureSurface(width, height)) {
@@ -170,8 +170,8 @@ void ZoneOverlay::Show(const RECT& work, const std::vector<RECT>& zones, const s
     Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> idleLine;
     Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> hotFill;
     Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> hotLine;
-    target_->CreateSolidColorBrush(D2D1::ColorF(0.72f, 0.84f, 0.94f, 0.16f), idleFill.GetAddressOf());
-    target_->CreateSolidColorBrush(D2D1::ColorF(1.0f, 1.0f, 1.0f, 0.38f), idleLine.GetAddressOf());
+    target_->CreateSolidColorBrush(FromAccent(accent, 0.16f), idleFill.GetAddressOf());
+    target_->CreateSolidColorBrush(FromAccent(accent, 0.52f), idleLine.GetAddressOf());
     target_->CreateSolidColorBrush(FromAccent(accent, 0.38f), hotFill.GetAddressOf());
     target_->CreateSolidColorBrush(FromAccent(accent, 0.95f), hotLine.GetAddressOf());
 
@@ -200,6 +200,14 @@ void ZoneOverlay::Show(const RECT& work, const std::vector<RECT>& zones, const s
     }
     target_->EndDraw();
     Present(hwnd_, screenDc_, memoryDc_, work.left, work.top, width, height);
+    const LONG extra = GetWindowLongW(hwnd_, GWL_EXSTYLE);
+    if (topmost) {
+        SetWindowLongW(hwnd_, GWL_EXSTYLE, extra | WS_EX_TOPMOST);
+        SetWindowPos(hwnd_, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+    } else {
+        SetWindowLongW(hwnd_, GWL_EXSTYLE, extra & ~WS_EX_TOPMOST);
+        SetWindowPos(hwnd_, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+    }
     if (!visible_) {
         ShowWindow(hwnd_, SW_SHOWNOACTIVATE);
         visible_ = true;

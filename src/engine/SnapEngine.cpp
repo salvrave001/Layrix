@@ -4,6 +4,8 @@
 #include "engine/WindowFilter.h"
 #include "overlay/ZoneOverlay.h"
 
+#include <dwmapi.h>
+
 #include <algorithm>
 #include <optional>
 
@@ -57,7 +59,21 @@ void SnapEngine::Reload() {
     RebuildZones();
     if (!settings_.zonesEnabled && dragging_) {
         EndDrag();
+        return;
     }
+    RefreshOverlays();
+}
+
+COLORREF SnapEngine::ZoneColor() const {
+    return ResolveColor(settings_.highlightColor);
+}
+
+void SnapEngine::RefreshOverlays() {
+    if (dragging_) {
+        OnDragTick();
+        return;
+    }
+    HideOverlays();
 }
 
 void SnapEngine::SetZonesEnabled(bool enabled) {
@@ -96,9 +112,7 @@ void SnapEngine::FlashMonitor(int index) {
     if (index < 0 || index >= static_cast<int>(monitors_.size()) || !badge_) {
         return;
     }
-    COLORREF color = RGB(76, 194, 255);
-    ParseHexColor(settings_.highlightColor, color);
-    badge_->Show(monitors_[static_cast<size_t>(index)].bounds, index + 1, color);
+    badge_->Show(monitors_[static_cast<size_t>(index)].bounds, index + 1, ZoneColor());
     SetTimer(host_, kTimerBadge, 900, nullptr);
 }
 
@@ -161,13 +175,26 @@ void SnapEngine::SnapWindow(HWND hwnd, const RECT& rect) const {
     if (IsZoomed(hwnd) || IsIconic(hwnd)) {
         ShowWindow(hwnd, SW_RESTORE);
     }
+    // Zones describe visible edges. GetWindowRect also includes the invisible
+    // resize borders, which otherwise leave a gap even when spacing is zero.
+    RECT target = rect;
+    RECT windowRect{}, frameRect{};
+    if (GetWindowRect(hwnd, &windowRect) &&
+        SUCCEEDED(DwmGetWindowAttribute(hwnd, DWMWA_EXTENDED_FRAME_BOUNDS,
+            &frameRect, sizeof(frameRect))) &&
+        frameRect.right > frameRect.left && frameRect.bottom > frameRect.top) {
+        target.left -= std::max(0L, frameRect.left - windowRect.left);
+        target.top -= std::max(0L, frameRect.top - windowRect.top);
+        target.right += std::max(0L, windowRect.right - frameRect.right);
+        target.bottom += std::max(0L, windowRect.bottom - frameRect.bottom);
+    }
     SetWindowPos(
         hwnd,
         nullptr,
-        rect.left,
-        rect.top,
-        std::max(1L, rect.right - rect.left),
-        std::max(1L, rect.bottom - rect.top),
+        target.left,
+        target.top,
+        std::max(1L, target.right - target.left),
+        std::max(1L, target.bottom - target.top),
         SWP_NOZORDER | SWP_NOACTIVATE);
 }
 
@@ -238,15 +265,14 @@ void SnapEngine::OnDragTick() {
 }
 
 void SnapEngine::UpdateHover(POINT point) {
-    const bool shift = (GetAsyncKeyState(VK_SHIFT) & 0x8000) != 0;
-    if (!shift) {
+    if (!KeyChordHeld(settings_.snapHold)) {
         selection_.clear();
         if (overlaysActive_) {
             HideOverlays();
         }
         return;
     }
-    const bool extend = (GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0;
+    const bool extend = KeyChordExtendHeld(settings_.snapHold);
     std::optional<ZoneGeom> hit;
     for (int monitor = 0; monitor < static_cast<int>(monitors_.size()); ++monitor) {
         if (!PtInRect(&monitors_[static_cast<size_t>(monitor)].bounds, point)) {
@@ -303,6 +329,10 @@ void SnapEngine::UpdateHover(POINT point) {
     if (changed) {
         selection_ = std::move(next);
     }
+    if (settings_.zoneDisplay == ZoneDisplayMode::Hidden) {
+        HideOverlays();
+        return;
+    }
     if (changed || !overlaysActive_) {
         Paint();
     }
@@ -310,8 +340,7 @@ void SnapEngine::UpdateHover(POINT point) {
 
 void SnapEngine::Paint() {
     overlaysActive_ = true;
-    COLORREF color = RGB(76, 194, 255);
-    ParseHexColor(settings_.highlightColor, color);
+    const COLORREF color = ZoneColor();
     std::optional<RECT> highlight;
     int highlightMonitor = -1;
     if (!selection_.empty()) {
@@ -332,7 +361,12 @@ void SnapEngine::Paint() {
             continue;
         }
         const std::optional<RECT> local = static_cast<int>(index) == highlightMonitor ? highlight : std::nullopt;
-        overlays_[index]->Show(monitors_[index].work, zones_[index], local, color);
+        overlays_[index]->Show(
+            monitors_[index].work,
+            zones_[index],
+            local,
+            color,
+            settings_.zoneDisplay == ZoneDisplayMode::OnTop);
     }
 }
 
@@ -361,7 +395,7 @@ void SnapEngine::EndDrag() {
     dragTarget_ = nullptr;
     selection_.clear();
     RemoveMouse();
-    HideOverlays();
+    RefreshOverlays();
     if (cancel || !settings_.zonesEnabled || !IsWindow(target) || selected.empty()) {
         return;
     }
