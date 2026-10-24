@@ -11,7 +11,7 @@ if (!$DestinationDirectory) { $DestinationDirectory = Join-Path $projectRoot 'di
 $BuildDirectory = (Resolve-Path -LiteralPath $BuildDirectory).Path
 $packageName = "Layrix-$Version-windows-x64"
 $stage = Join-Path $DestinationDirectory $packageName
-if (Test-Path -LiteralPath $stage) { throw "Staging directory already exists: $stage. Choose a new destination." }
+if (Test-Path -LiteralPath $stage) { Remove-Item -LiteralPath $stage -Recurse -Force }
 New-Item -ItemType Directory -Path $stage -Force | Out-Null
 # Only release payloads: never copy personal settings, debug symbols, old EXEs, or shortcuts.
 Get-ChildItem -LiteralPath $BuildDirectory -File | Where-Object {
@@ -26,8 +26,9 @@ foreach ($required in 'Layrix.exe', 'LayrixEditor.dll', 'resources.pri', 'Micros
 $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'
 $vs = & $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath | Select-Object -First 1
 $crt = Get-ChildItem -LiteralPath (Join-Path $vs 'VC/Redist/MSVC') -Directory | Where-Object Name -match '^\d' | Sort-Object Name -Descending | ForEach-Object {
-    Join-Path $_.FullName 'x64/Microsoft.VC143.CRT'
-} | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+    Get-ChildItem -LiteralPath (Join-Path $_.FullName 'x64') -Directory -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -like 'Microsoft.VC*.CRT' }
+} | Select-Object -ExpandProperty FullName -First 1
 if (!$crt) { throw 'The app-local Visual C++ x64 runtime was not found.' }
 Get-ChildItem -LiteralPath $crt -Filter '*.dll' | Copy-Item -Destination $stage
 Copy-Item -LiteralPath (Join-Path $projectRoot 'licenses') -Destination $stage -Recurse
@@ -42,7 +43,7 @@ Copy-Item -LiteralPath (Join-Path $sdkRoot 'NOTICE.txt') -Destination (Join-Path
 $badFiles = Get-ChildItem -LiteralPath $stage -Recurse -File | Where-Object { $_.Name -like 'layouts.json*' -or $_.Extension -in '.pdb', '.lnk', '.lib', '.exp' }
 if ($badFiles) { throw 'The archive unexpectedly contains local or build-only files.' }
 $archive = Join-Path $DestinationDirectory "$packageName.zip"
-if (Test-Path -LiteralPath $archive) { throw "Archive already exists: $archive" }
+if (Test-Path -LiteralPath $archive) { Remove-Item -LiteralPath $archive -Force }
 Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $archive -CompressionLevel Optimal
 $hash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
 "$hash  $packageName.zip" | Set-Content -LiteralPath (Join-Path $DestinationDirectory 'SHA256SUMS.txt') -Encoding ascii
