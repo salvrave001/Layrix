@@ -1,6 +1,7 @@
 #include "engine/LayoutStore.h"
 
 #include "engine/MonitorService.h"
+#include "engine/UiStrings.h"
 
 #include <nlohmann/json.hpp>
 
@@ -152,6 +153,9 @@ AppSettings LayoutStore::LoadUnlocked() {
         if (document.contains("zonesEnabled")) {
             settings.zonesEnabled = document["zonesEnabled"].get<bool>();
         }
+        if (document.contains("language") && document["language"].is_string()) {
+            settings.language = FromUtf8(document["language"].get<std::string>());
+        }
         if (document.contains("zoneDisplay")) {
             if (const auto mode = ZoneDisplayFromString(FromUtf8(document["zoneDisplay"].get<std::string>()))) {
                 settings.zoneDisplay = *mode;
@@ -211,6 +215,7 @@ AppSettings LayoutStore::LoadUnlocked() {
         }
         settings.highlightColor = NormalizeColorSetting(settings.highlightColor);
         settings.accentColor = NormalizeColorSetting(settings.accentColor);
+        settings.language = std::wstring(UiLanguageCode(ParseUiLanguage(settings.language)));
         if (settings.layouts.empty()) {
             throw std::runtime_error("empty");
         }
@@ -256,6 +261,7 @@ void LayoutStore::SaveUnlocked(const AppSettings& settings) {
         {"zonesEnabled", settings.zonesEnabled},
         {"zoneDisplay", ToUtf8(ZoneDisplayToString(settings.zoneDisplay))},
         {"snapHold", ToUtf8(FormatKeyChord(settings.snapHold))},
+        {"language", ToUtf8(settings.language)},
         {"layouts", std::move(layouts)},
         {"monitors", std::move(monitors)},
     };

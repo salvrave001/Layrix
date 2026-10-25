@@ -63,6 +63,7 @@ struct AppSettings {
     std::wstring highlightColor{kSystemColor};
     std::wstring accentColor{kSystemColor};
     KeyChord snapHold = DefaultSnapHold();
+    std::wstring language{L"ru"};
     bool overrideWinArrows = true;
     bool zonesEnabled = true;
     ZoneDisplayMode zoneDisplay = ZoneDisplayMode::OnTop;
@@ -79,8 +80,8 @@ std::wstring_view LayoutTypeToString(LayoutType type);
 std::optional<LayoutType> LayoutTypeFromString(std::wstring_view text);
 std::wstring_view ZoneDisplayToString(ZoneDisplayMode mode);
 std::optional<ZoneDisplayMode> ZoneDisplayFromString(std::wstring_view text);
-std::wstring_view ZoneDisplayTitle(ZoneDisplayMode mode);
-std::wstring_view ZoneDisplayHint(ZoneDisplayMode mode);
+std::wstring ZoneDisplayTitle(ZoneDisplayMode mode);
+std::wstring ZoneDisplayHint(ZoneDisplayMode mode);
 
 std::vector<NormRect> BuildNormalizedZones(const Layout& layout);
 RECT ZoneToPixels(const NormRect& zone, const RECT& work, int spacing);

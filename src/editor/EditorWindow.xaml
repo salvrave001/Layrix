@@ -31,12 +31,18 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <Border x:Name="TitleDrag" Background="Transparent" Margin="0,0,208,0">
+        <Border x:Name="TitleDrag" Background="Transparent" Margin="0,0,252,0">
             <StackPanel Orientation="Horizontal" Spacing="8" Margin="16,0,0,0" VerticalAlignment="Center">
                 <FontIcon x:Name="TitleIcon" Glyph="&#xE8A9;" FontSize="14" Foreground="#FFE5E5E5"/>
                 <TextBlock Text="Layrix" FontSize="12" Foreground="#FFE5E5E5" VerticalAlignment="Center"/>
             </StackPanel>
         </Border>
+        <Button x:Name="LanguageButton" HorizontalAlignment="Right" VerticalAlignment="Center"
+                Margin="0,0,200,0" MinWidth="36" Height="32" Padding="8,0"
+                Background="#CC2B2B2B" BorderBrush="#33FFFFFF" BorderThickness="1"
+                CornerRadius="16" ToolTipService.ToolTip="Язык">
+            <TextBlock x:Name="LanguageLabel" Text="RU" FontSize="11" FontWeight="SemiBold" Foreground="#FFE8E8E8"/>
+        </Button>
         <Button x:Name="SettingsButton" HorizontalAlignment="Right" VerticalAlignment="Center"
                 Margin="0,0,156,0" Width="36" Height="32" Padding="0"
                 Background="#CC2B2B2B" BorderBrush="#33FFFFFF" BorderThickness="1"
@@ -52,28 +58,28 @@
         </Border>
         <ScrollViewer x:Name="Gallery" Grid.Row="2" Background="Transparent" VerticalScrollBarVisibility="Auto" Padding="24,20,24,12">
             <StackPanel Spacing="14">
-                <TextBlock Text="Шаблоны" FontSize="18" FontWeight="SemiBold" Foreground="White"/>
+                <TextBlock x:Name="TemplatesTitle" Text="Шаблоны" FontSize="18" FontWeight="SemiBold" Foreground="White"/>
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                    <StackPanel x:Name="TemplateHost" Orientation="Horizontal" Spacing="10"/>
+                    <Grid x:Name="TemplateHost" ColumnSpacing="10" RowSpacing="10"/>
                 </ScrollViewer>
-                <TextBlock Text="Свои макеты" FontSize="18" FontWeight="SemiBold" Foreground="White" Margin="0,10,0,0"/>
+                <TextBlock x:Name="CustomTitle" Text="Свои макеты" FontSize="18" FontWeight="SemiBold" Foreground="White" Margin="0,10,0,0"/>
                 <Border x:Name="CustomEmpty" Style="{StaticResource GlassCard}" Padding="18">
                     <StackPanel Spacing="4">
-                        <TextBlock Text="Ваше рабочее пространство" Foreground="#FFDDDDDD" FontSize="14"/>
-                        <TextBlock Text="Создайте макет и расположите зоны так, как удобно вам." Foreground="#FF999999" TextWrapping="Wrap"/>
+                        <TextBlock x:Name="CustomEmptyTitle" Text="Ваше рабочее пространство" Foreground="#FFDDDDDD" FontSize="14"/>
+                        <TextBlock x:Name="CustomEmptyHint" Text="Создайте макет и расположите зоны так, как удобно вам." Foreground="#FF999999" TextWrapping="Wrap"/>
                     </StackPanel>
                 </Border>
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                    <StackPanel x:Name="CustomHost" Orientation="Horizontal" Spacing="10"/>
+                    <Grid x:Name="CustomHost" ColumnSpacing="10" RowSpacing="10"/>
                 </ScrollViewer>
-                <Expander Header="Настройки привязки" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Margin="0,8,0,0">
+                <Expander x:Name="SnapSettingsExpander" Header="Настройки привязки" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Margin="0,8,0,0">
                     <StackPanel x:Name="ControlsHost" Spacing="16">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <TextBlock x:Name="SpacingLabel" Text="Отступ" Foreground="White" VerticalAlignment="Center" MinWidth="180"/>
                             <TextBlock x:Name="SpacingValue" MinWidth="42" Foreground="#FFBBBBBB" VerticalAlignment="Center"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="Перехват Win + стрелки" Foreground="White" VerticalAlignment="Center" MinWidth="180"/>
+                            <TextBlock x:Name="WinArrowsLabel" Text="Перехват Win + стрелки" Foreground="White" VerticalAlignment="Center" MinWidth="180"/>
                         </StackPanel>
                     </StackPanel>
                 </Expander>
@@ -82,12 +88,12 @@
         <ScrollViewer x:Name="SettingsPage" Grid.Row="1" Grid.RowSpan="3" Visibility="Collapsed" Background="Transparent" Padding="32,24" VerticalScrollBarVisibility="Auto">
             <StackPanel MaxWidth="850" HorizontalAlignment="Stretch" Spacing="20">
                 <Button x:Name="BackToLayouts" Style="{StaticResource DarkPillButton}" Content="←  К макетам зон" HorizontalAlignment="Left"/>
-                <TextBlock Text="Настройки приложения" FontSize="28" FontWeight="SemiBold"/>
-                <TextBlock Text="Изменения применяются сразу." Foreground="#FFAAAAAA"/>
+                <TextBlock x:Name="SettingsTitle" Text="Настройки приложения" FontSize="28" FontWeight="SemiBold"/>
+                <TextBlock x:Name="SettingsIntro" Text="Изменения применяются сразу." Foreground="#FFAAAAAA"/>
                 <Border Style="{StaticResource GlassCard}">
                     <StackPanel Spacing="10">
                         <ToggleSwitch x:Name="StartupToggle" Header="Запускать вместе с Windows" OnContent="Включён" OffContent="Выключен"/>
-                        <TextBlock Text="Layrix будет запускаться при входе в вашу учётную запись и работать в трее. Окно редактора открываться не будет." TextWrapping="Wrap" Foreground="#FFBBBBBB"/>
+                        <TextBlock x:Name="StartupHelp" Text="Layrix будет запускаться при входе в вашу учётную запись и работать в трее. Окно редактора открываться не будет." TextWrapping="Wrap" Foreground="#FFBBBBBB"/>
                         <TextBlock x:Name="StartupStatus" TextWrapping="Wrap" Foreground="#FFAAAAAA" FontSize="12"/>
                     </StackPanel>
                 </Border>
@@ -96,7 +102,7 @@
                         <ToggleSwitch x:Name="ZonesToggle" Header="Привязка окон к зонам" OnContent="Включена" OffContent="Выключена"/>
                         <TextBlock x:Name="ZonesSnapHint" TextWrapping="Wrap" Foreground="#FFBBBBBB"/>
                         <StackPanel Orientation="Horizontal" Spacing="10">
-                            <TextBlock Text="Клавиша привязки" Foreground="White" VerticalAlignment="Center" MinWidth="140"/>
+                            <TextBlock x:Name="SnapHoldLabel" Text="Клавиша привязки" Foreground="White" VerticalAlignment="Center" MinWidth="140"/>
                             <Button x:Name="SnapHoldButton" Style="{StaticResource DarkPillButton}" MinWidth="140"/>
                             <Button x:Name="SnapHoldReset" Style="{StaticResource DarkPillButton}" Content="Сбросить" Padding="14,0"/>
                         </StackPanel>
@@ -106,12 +112,12 @@
                 <Border Style="{StaticResource GlassCard}">
                     <StackPanel Spacing="10">
                         <ToggleSwitch x:Name="ArrowKeysToggle" Header="Перемещать окна по зонам клавишами Win + ← / →" OnContent="Включено" OffContent="Выключено"/>
-                        <TextBlock Text="Стрелки переключают активное окно между зонами выбранного монитора." TextWrapping="Wrap" Foreground="#FFBBBBBB"/>
+                        <TextBlock x:Name="ArrowKeysHint" Text="Стрелки переключают активное окно между зонами выбранного монитора." TextWrapping="Wrap" Foreground="#FFBBBBBB"/>
                     </StackPanel>
                 </Border>
                 <Border Style="{StaticResource GlassCard}">
                     <StackPanel Spacing="10">
-                        <TextBlock Text="Отображение зон" FontSize="18" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="ZoneDisplayTitle" Text="Отображение зон" FontSize="18" FontWeight="SemiBold"/>
                         <ComboBox x:Name="ZoneDisplayCombo" MinWidth="280" HorizontalAlignment="Left">
                             <ComboBox.Resources>
                                 <SolidColorBrush x:Key="ComboBoxDropDownBackground" Color="#FF2B2B2B"/>
@@ -134,17 +140,17 @@
                 </Border>
                 <Border Style="{StaticResource GlassCard}">
                     <StackPanel Spacing="12">
-                        <TextBlock Text="Цвет зон" FontSize="18" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="ZoneColorTitle" Text="Цвет зон" FontSize="18" FontWeight="SemiBold"/>
                         <ToggleSwitch x:Name="ZoneColorSystemToggle" Header="Как в Windows" OnContent="Системный" OffContent="Свой"/>
-                        <TextBlock Text="Подсветка зон при перетаскивании. По умолчанию берётся цвет акцента Windows." TextWrapping="Wrap" Foreground="#FFBBBBBB"/>
+                        <TextBlock x:Name="ZoneColorHelp" Text="Подсветка зон при перетаскивании. По умолчанию берётся цвет акцента Windows." TextWrapping="Wrap" Foreground="#FFBBBBBB"/>
                         <StackPanel x:Name="ZoneColorHost" Spacing="10"/>
                     </StackPanel>
                 </Border>
                 <Border Style="{StaticResource GlassCard}">
                     <StackPanel Spacing="12">
-                        <TextBlock Text="Цвет акцентов приложения" FontSize="18" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="AccentColorTitle" Text="Цвет акцентов приложения" FontSize="18" FontWeight="SemiBold"/>
                         <ToggleSwitch x:Name="AccentColorSystemToggle" Header="Как в Windows" OnContent="Системный" OffContent="Свой"/>
-                        <TextBlock Text="Выделение макетов, переключатели и элементы редактора. По умолчанию совпадает с акцентом Windows. Нажмите образец или «Палитра», чтобы выбрать цвет кругом, RGB, HSV или HEX." TextWrapping="Wrap" Foreground="#FFBBBBBB"/>
+                        <TextBlock x:Name="AccentColorHelp" Text="Выделение макетов, переключатели и элементы редактора. По умолчанию совпадает с акцентом Windows. Нажмите образец или «Палитра», чтобы выбрать цвет кругом, RGB, HSV или HEX." TextWrapping="Wrap" Foreground="#FFBBBBBB"/>
                         <StackPanel x:Name="AccentColorHost" Spacing="10"/>
                     </StackPanel>
                 </Border>

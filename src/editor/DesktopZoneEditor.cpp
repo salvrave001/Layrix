@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "DesktopZoneEditor.h"
 #include "engine/ZoneEditing.h"
+#include "engine/UiStrings.h"
 #include <microsoft.ui.xaml.window.h>
 #include <winrt/Windows.UI.Text.h>
 #include <windowsx.h>
@@ -79,7 +80,7 @@ bool DesktopZoneEditor::Open(HWND owner, RECT work, std::wstring name, std::vect
     tools_ = std::make_unique<ToolsUi>();
     auto& ui = *tools_;
     ui.window = Window();
-    ui.window.Title(L"Layrix · Редактирование зон");
+    ui.window.Title(hstring{Tr(L"edit_title")});
     ui.window.ExtendsContentIntoTitleBar(true);
 
     auto brush = [](uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255) {
@@ -142,7 +143,7 @@ bool DesktopZoneEditor::Open(HWND owner, RECT work, std::wstring name, std::vect
     icon.FontSize(16);
     icon.Foreground(brush(229, 229, 229));
     TextBlock titleText;
-    titleText.Text(L"Редактирование зон");
+    titleText.Text(hstring{Tr(L"edit_title")});
     titleText.FontSize(14);
     titleText.FontWeight(winrt::Windows::UI::Text::FontWeights::SemiBold());
     heading.Children().Append(icon);
@@ -166,12 +167,12 @@ bool DesktopZoneEditor::Open(HWND owner, RECT work, std::wstring name, std::vect
     StackPanel nameGroup;
     nameGroup.Spacing(5);
     TextBlock nameLabel;
-    nameLabel.Text(L"Название макета");
+    nameLabel.Text(hstring{Tr(L"layout_name")});
     nameLabel.FontSize(12);
     nameLabel.Foreground(brush(190, 190, 190));
     ui.name = TextBox();
     ui.name.Text(name_);
-    ui.name.PlaceholderText(L"Свой макет");
+    ui.name.PlaceholderText(hstring{Tr(L"layout_name_ph")});
     ui.name.CornerRadius({12, 12, 12, 12});
     ui.name.Background(brush(43, 43, 43, 200));
     ui.name.BorderBrush(brush(255, 255, 255, 38));
@@ -179,7 +180,7 @@ bool DesktopZoneEditor::Open(HWND owner, RECT work, std::wstring name, std::vect
     nameGroup.Children().Append(ui.name);
     details.Children().Append(nameGroup);
     TextBlock hint;
-    hint.Text(L"Тяните границы и зоны мышью. На пустом месте можно нарисовать новую зону.");
+    hint.Text(hstring{Tr(L"edit_hint")});
     hint.TextWrapping(TextWrapping::Wrap);
     hint.FontSize(13);
     hint.Foreground(brush(180, 180, 180));
@@ -209,16 +210,16 @@ bool DesktopZoneEditor::Open(HWND owner, RECT work, std::wstring name, std::vect
         control.Click([this, command](auto&&, auto&&) { Command(command); });
         return control;
     };
-    editing.Children().Append(button(L"+  Зона", Add));
-    ui.splitX = button(L"Разделить ↔", SplitX);
-    ui.splitY = button(L"Разделить ↕", SplitY);
-    ui.remove = button(L"Удалить зону", Delete);
+    editing.Children().Append(button(Tr(L"add_zone").c_str(), Add));
+    ui.splitX = button(Tr(L"split_h").c_str(), SplitX);
+    ui.splitY = button(Tr(L"split_v").c_str(), SplitY);
+    ui.remove = button(Tr(L"delete_zone").c_str(), Delete);
     editing.Children().Append(ui.splitX);
     editing.Children().Append(ui.splitY);
     editing.Children().Append(ui.remove);
-    ui.cancel = button(L"Отмена · Esc", Cancel);
-    ui.save = button(L"Сохранить", Save);
-    ToolTipService::SetToolTip(ui.save, box_value(L"Сохранить · Ctrl + S"));
+    ui.cancel = button(Tr(L"cancel_esc").c_str(), Cancel);
+    ui.save = button(Tr(L"save").c_str(), Save);
+    ToolTipService::SetToolTip(ui.save, box_value(hstring{Tr(L"save_tip")}));
     finishing.Children().Append(ui.cancel);
     finishing.Children().Append(ui.save);
     actions.Children().Append(editing);
@@ -318,7 +319,7 @@ void DesktopZoneEditor::UpdateButtons() {
     tools_->splitY.IsEnabled(selected);
     tools_->remove.IsEnabled(selected);
     tools_->save.IsEnabled(!zones_.empty());
-    tools_->counter.Text(winrt::hstring{L"Зон: " + std::to_wstring(zones_.size())});
+    tools_->counter.Text(winrt::hstring{Tr(L"zones_count") + std::to_wstring(zones_.size())});
 }
 
 void DesktopZoneEditor::Command(int command) {

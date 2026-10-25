@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "CanvasEditor.xaml.h"
+#include "engine/UiStrings.h"
 
 #include <algorithm>
 #include <cmath>
@@ -45,13 +46,13 @@ void CanvasEditor::BuildUi() {
     root.RowSpacing(12);
 
     nameBox_ = TextBox();
-    nameBox_.PlaceholderText(L"Свой макет");
+    nameBox_.PlaceholderText(hstring{layrix::Tr(L"layout_name_ph")});
     TextBlock nameLabel;
-    nameLabel.Text(L"Название");
+    nameLabel.Text(hstring{layrix::Tr(L"name")});
     nameLabel.Margin(Thickness{0, 0, 0, 4});
     nameLabel.Foreground(Paint(255, 255, 255, 217));
     TextBlock hint;
-    hint.Text(L"Протяните мышь, чтобы создать зону. Перетащите зону или её край. Delete удаляет зону.");
+    hint.Text(hstring{layrix::Tr(L"canvas_hint")});
     hint.Opacity(0.7);
     hint.TextWrapping(TextWrapping::Wrap);
     hint.Foreground(Paint(255, 255, 255));
@@ -94,15 +95,15 @@ void CanvasEditor::BuildUi() {
         button.CornerRadius(winrt::Microsoft::UI::Xaml::CornerRadius(16.0));
     };
     deleteButton_ = Button();
-    deleteButton_.Content(box_value(hstring{L"Удалить макет"}));
+    deleteButton_.Content(box_value(hstring{layrix::Tr(L"delete_layout")}));
     deleteButton_.Padding(Thickness{14, 0, 14, 0});
     stylePill(deleteButton_);
     cancelButton_ = Button();
-    cancelButton_.Content(box_value(hstring{L"Отмена"}));
+    cancelButton_.Content(box_value(hstring{layrix::Tr(L"cancel")}));
     cancelButton_.Padding(Thickness{14, 0, 14, 0});
     stylePill(cancelButton_);
     saveButton_ = Button();
-    saveButton_.Content(box_value(hstring{L"Сохранить"}));
+    saveButton_.Content(box_value(hstring{layrix::Tr(L"save")}));
     saveButton_.Padding(Thickness{16, 0, 16, 0});
     stylePill(saveButton_);
     buttons.Children().Append(deleteButton_);
@@ -112,7 +113,7 @@ void CanvasEditor::BuildUi() {
     tools.Orientation(Orientation::Horizontal);
     tools.Spacing(8);
     Button add;
-    add.Content(box_value(hstring{L"+ Зона"}));
+    add.Content(box_value(hstring{layrix::Tr(L"add_zone")}));
     add.Padding(Thickness{14, 0, 14, 0});
     stylePill(add);
     add.Click([this](auto&&, auto&&) {
@@ -124,7 +125,7 @@ void CanvasEditor::BuildUi() {
     tools.Children().Append(add);
     for (bool vertical : {true, false}) {
         Button split;
-        split.Content(box_value(hstring{vertical ? L"Разделить ↔" : L"Разделить ↕"}));
+        split.Content(box_value(hstring{layrix::Tr(vertical ? L"split_h" : L"split_v")}));
         split.Padding(Thickness{14, 0, 14, 0});
         stylePill(split);
         split.Click([this, vertical](auto&&, auto&&) {

@@ -6,6 +6,7 @@
 #include "engine/Messages.h"
 #include "engine/SnapEngine.h"
 #include "engine/StartupLog.h"
+#include "engine/UiStrings.h"
 
 #include <filesystem>
 
@@ -183,12 +184,12 @@ void TrayApp::RemoveTray() {
 
 void TrayApp::ShowMenu() {
     HMENU menu = CreatePopupMenu();
-    AppendMenuW(menu, MF_STRING, 1, L"Редактор зон");
-    AppendMenuW(menu, MF_STRING, 4, L"Настройки");
+    AppendMenuW(menu, MF_STRING, 1, Tr(L"tray_editor").c_str());
+    AppendMenuW(menu, MF_STRING, 4, Tr(L"tray_settings").c_str());
     const UINT check = (engine_ && engine_->ZonesEnabled()) ? MF_CHECKED : MF_UNCHECKED;
-    AppendMenuW(menu, MF_STRING | check, 2, L"Зоны включены");
+    AppendMenuW(menu, MF_STRING | check, 2, Tr(L"tray_zones").c_str());
     AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
-    AppendMenuW(menu, MF_STRING, 3, L"Выход");
+    AppendMenuW(menu, MF_STRING, 3, Tr(L"tray_exit").c_str());
 
     POINT point{};
     GetCursorPos(&point);
@@ -213,13 +214,15 @@ void TrayApp::OpenEditor(bool settings) {
         const auto dll = std::filesystem::path(executable).parent_path() / L"LayrixEditor.dll";
         editorModule_ = LoadLibraryW(dll.c_str());
         if (!editorModule_) {
-            MessageBoxW(hwnd_, L"Не удалось открыть редактор зон.", L"Layrix", MB_ICONERROR);
+            const auto message = Tr(L"editor_open_fail");
+            MessageBoxW(hwnd_, message.c_str(), L"Layrix", MB_ICONERROR);
             return;
         }
         showEditor_ = reinterpret_cast<void(__stdcall*)()>(GetProcAddress(editorModule_, "ShowLayrixEditor"));
         showSettings_ = reinterpret_cast<void(__stdcall*)()>(GetProcAddress(editorModule_, "ShowLayrixSettings"));
         if (!showEditor_) {
-            MessageBoxW(hwnd_, L"Не удалось открыть редактор зон.", L"Layrix", MB_ICONERROR);
+            const auto message = Tr(L"editor_open_fail");
+            MessageBoxW(hwnd_, message.c_str(), L"Layrix", MB_ICONERROR);
             return;
         }
     }

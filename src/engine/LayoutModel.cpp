@@ -1,4 +1,5 @@
 #include "engine/LayoutModel.h"
+#include "engine/UiStrings.h"
 
 #include <dwmapi.h>
 
@@ -116,28 +117,28 @@ std::optional<ZoneDisplayMode> ZoneDisplayFromString(std::wstring_view text) {
     return std::nullopt;
 }
 
-std::wstring_view ZoneDisplayTitle(ZoneDisplayMode mode) {
+std::wstring ZoneDisplayTitle(ZoneDisplayMode mode) {
     switch (mode) {
     case ZoneDisplayMode::Hidden:
-        return L"Невидимые области";
+        return Tr(L"zone_display_hidden");
     case ZoneDisplayMode::OnTop:
-        return L"Зоны поверх";
+        return Tr(L"zone_display_top");
     case ZoneDisplayMode::OnDesktop:
-        return L"Зоны на рабочем столе";
+        return Tr(L"zone_display_desktop");
     }
-    return L"Зоны поверх";
+    return Tr(L"zone_display_top");
 }
 
-std::wstring_view ZoneDisplayHint(ZoneDisplayMode mode) {
+std::wstring ZoneDisplayHint(ZoneDisplayMode mode) {
     switch (mode) {
     case ZoneDisplayMode::Hidden:
-        return L"При перетаскивании окна зоны не рисуются. Привязка по клавише всё равно работает.";
+        return Tr(L"zone_display_hidden_hint");
     case ZoneDisplayMode::OnTop:
-        return L"Во время перетаскивания контуры зон рисуются поверх других окон и не перехватывают мышь.";
+        return Tr(L"zone_display_top_hint");
     case ZoneDisplayMode::OnDesktop:
-        return L"Во время перетаскивания зоны видны на рабочем столе и остаются под окнами приложений.";
+        return Tr(L"zone_display_desktop_hint");
     }
-    return L"";
+    return {};
 }
 
 std::vector<NormRect> BuildNormalizedZones(const Layout& layout) {
@@ -462,7 +463,7 @@ std::wstring NextCustomId(const AppSettings& settings) {
 
 std::wstring NextCustomName(const AppSettings& settings) {
     for (int number = 1;; ++number) {
-        std::wstring name = L"Свой макет " + std::to_wstring(number);
+        std::wstring name = Tr(L"custom_layout") + L" " + std::to_wstring(number);
         const bool used = std::any_of(settings.layouts.begin(), settings.layouts.end(), [&](const Layout& layout) {
             return layout.name == name;
         });
@@ -661,12 +662,11 @@ std::wstring FormatSnapHint(const KeyChord& snap) {
     } else if (snap.ctrl && snap.shift && !snap.alt) {
         extra = L"Alt";
     }
-    return L"Удерживайте " + hold + L" при перетаскивании окна. " + hold + L" + " + extra +
-        L" позволяет занять несколько зон.";
+    return ReplaceText(TrReplace(L"snap_hint", L"{hold}", hold), L"{extra}", extra);
 }
 
 std::wstring FormatSnapFooter(const KeyChord& snap) {
-    return L"Удерживайте " + FormatKeyChord(snap) + L" при перетаскивании окна в зону";
+    return TrReplace(L"snap_footer", L"{hold}", FormatKeyChord(snap));
 }
 
 bool ParseKeyChord(std::wstring_view text, KeyChord& chord) {

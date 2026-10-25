@@ -1,6 +1,7 @@
 #include "engine/SnapEngine.h"
 
 #include "engine/Messages.h"
+#include "engine/UiStrings.h"
 #include "engine/WindowFilter.h"
 #include "overlay/ZoneOverlay.h"
 
@@ -55,6 +56,7 @@ SnapEngine::~SnapEngine() {
 
 void SnapEngine::Reload() {
     settings_ = store_.Load();
+    SetCurrentUiLanguage(ParseUiLanguage(settings_.language));
     hotkeys_.SetEnabled(settings_.zonesEnabled && settings_.overrideWinArrows);
     RebuildZones();
     if (!settings_.zonesEnabled && dragging_) {

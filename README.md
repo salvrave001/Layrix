@@ -20,14 +20,14 @@ Layrix focuses on arranging windows into zones. It is an independent alternative
 - Optional startup with Windows, running quietly in the notification area.
 - Customizable snap-hold key, zone highlight, and app accent (Windows accent by default).
 
-The current interface is in Russian. English localization is not included in v1.0.3.
+The interface is available in Russian and English. Switch language with the RU/EN control in the editor title bar.
 
 ## Download and run
 
-1. Download `Layrix-1.0.3-windows-x64.zip` from [Releases](https://github.com/salvrave001/Layrix/releases).
+1. Download `Layrix-1.0.4-windows-x64.zip` from [Releases](https://github.com/salvrave001/Layrix/releases).
 2. Extract the **entire** archive into a writable folder. Do not run the application from inside the ZIP.
-3. Run `Layrix.exe`. The editor opens; the app also stays in the notification area. A Windows Startup launch stays in the tray only.
-4. Double-click its tray icon to open the layout gallery, or right-click it and choose **Редактор зон**.
+3. Run `Layrix.exe`. The editor opens; the app also stays in the notification area. Closing the editor hides it to the tray. A Windows Startup launch stays in the tray only.
+4. Double-click its tray icon to open the layout gallery, or right-click it and choose **Zone editor** / **Редактор зон**.
 
 Windows 10 version 1809 or later, or Windows 11, **x64**. ARM64 and x86 builds are not provided. The portable archive includes the Windows App SDK runtime and the Visual C++ runtime DLLs. Keep the included DLLs and language folders next to the executable.
 
@@ -35,7 +35,7 @@ The initial release is unsigned. Windows may show a publisher warning. Verify th
 
 ## Desktop editing
 
-Click the pencil on a layout card. The gallery hides and the zones appear over the selected monitor's desktop at their actual size.
+Click the pencil on a layout card, or right-click a custom layout and choose **Edit**. The gallery hides and the zones appear over the selected monitor's desktop at their actual size. Right-click a custom layout to rename or delete it.
 
 Drag a zone or its edges. Draw in an empty area to add a zone, or use the floating toolbar. **Save / Ctrl + S** applies the layout; **Escape** cancels the editing session. Editing a built-in template creates a custom copy.
 
@@ -67,7 +67,7 @@ Install Visual Studio 2022 / Build Tools with **Desktop development with C++**, 
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/build.ps1
-powershell -ExecutionPolicy Bypass -File scripts/package.ps1 -Version 1.0.3
+powershell -ExecutionPolicy Bypass -File scripts/package.ps1 -Version 1.0.4
 ```
 
 `build.ps1` restores dependencies, builds the editor and engine, and runs `Layrix.exe --self-test`. The package is written to `dist/` and excludes personal layouts, debug symbols, and old executables. GitHub Actions runs the same scripts; pushing a `v*` tag publishes a release after a successful build.

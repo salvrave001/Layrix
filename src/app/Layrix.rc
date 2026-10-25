@@ -4,8 +4,8 @@
 IDI_APP ICON "layrix.ico"
 
 1 VERSIONINFO
-FILEVERSION 1,0,3,0
-PRODUCTVERSION 1,0,3,0
+FILEVERSION 1,0,4,0
+PRODUCTVERSION 1,0,4,0
 FILEFLAGSMASK 0x3fL
 FILEFLAGS 0x0L
 FILEOS 0x40004L
@@ -18,11 +18,11 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Layrix"
             VALUE "FileDescription", "Layrix zone window manager"
-            VALUE "FileVersion", "1.0.3.0"
+            VALUE "FileVersion", "1.0.4.0"
             VALUE "InternalName", "Layrix"
             VALUE "OriginalFilename", "Layrix.exe"
             VALUE "ProductName", "Layrix"
-            VALUE "ProductVersion", "1.0.3.0"
+            VALUE "ProductVersion", "1.0.4.0"
         END
     END
     BLOCK "VarFileInfo"

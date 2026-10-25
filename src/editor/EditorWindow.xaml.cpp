@@ -6,11 +6,14 @@
 #include "TemplateCard.xaml.h"
 #include "engine/Messages.h"
 #include "engine/StartupRegistration.h"
+#include "engine/UiStrings.h"
 
 #include <microsoft.ui.xaml.window.h>
 
 #include <algorithm>
 #include <cmath>
+#include <string_view>
+#include <vector>
 
 using namespace winrt;
 using namespace winrt::Microsoft::UI::Xaml;
@@ -20,6 +23,56 @@ using namespace winrt::Microsoft::UI::Xaml::Input;
 using namespace winrt::Microsoft::UI::Xaml::Media;
 using namespace winrt::Microsoft::UI::Windowing;
 using namespace winrt::Windows::UI;
+
+namespace {
+hstring T(std::wstring_view key) {
+    return hstring{layrix::Tr(key)};
+}
+
+std::wstring TrimName(std::wstring text) {
+    const auto start = text.find_first_not_of(L" \t\r\n");
+    if (start == std::wstring::npos) {
+        return {};
+    }
+    return text.substr(start, text.find_last_not_of(L" \t\r\n") - start + 1);
+}
+
+void LayoutCardGrid(Grid const& host, const std::vector<UIElement>& cards, double availableWidth) {
+    host.Children().Clear();
+    host.RowDefinitions().Clear();
+    host.ColumnDefinitions().Clear();
+    host.ColumnSpacing(10);
+    host.RowSpacing(10);
+    host.HorizontalAlignment(HorizontalAlignment::Left);
+    if (cards.empty()) {
+        return;
+    }
+    constexpr double kThumb = 162.0;
+    constexpr double kGap = 10.0;
+    const int count = static_cast<int>(cards.size());
+    const int columns = std::max(1, static_cast<int>((std::max(kThumb, availableWidth) + kGap) / (kThumb + kGap)));
+    const int rows = (count + columns - 1) / columns;
+    for (int index = 0; index < rows; ++index) {
+        host.RowDefinitions().Append(RowDefinition());
+    }
+    for (int index = 0; index < columns; ++index) {
+        ColumnDefinition column;
+        column.Width(GridLength{kThumb, GridUnitType::Pixel});
+        host.ColumnDefinitions().Append(column);
+    }
+    for (int index = 0; index < count; ++index) {
+        const int row = index / columns;
+        const int column = index % columns;
+        auto card = cards[static_cast<size_t>(index)];
+        if (auto* view = get_self<winrt::LayrixEditor::implementation::TemplateCard>(card.as<winrt::LayrixEditor::TemplateCard>())) {
+            view->SetCardWidth(kThumb);
+        }
+        Grid::SetRow(card.as<FrameworkElement>(), row);
+        Grid::SetColumn(card.as<FrameworkElement>(), column);
+        host.Children().Append(card);
+    }
+}
+}
 
 namespace {
 SolidColorBrush Paint(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255) {
@@ -89,6 +142,10 @@ EditorWindow::EditorWindow() : store_(layrix::LayoutStore::BesideExecutable()) {
     titleBar.ButtonForegroundColor(ColorHelper::FromArgb(255, 230, 230, 230));
     titleBar.ButtonHoverBackgroundColor(ColorHelper::FromArgb(40, 255, 255, 255));
     titleBar.ButtonPressedBackgroundColor(ColorHelper::FromArgb(70, 255, 255, 255));
+    AppWindow().Closing([this](auto&&, AppWindowClosingEventArgs const& args) {
+        args.Cancel(true);
+        MinimizeToTray();
+    });
 
     desktopEditor_ = std::make_unique<layrix::DesktopZoneEditor>();
     colorPicker_ = std::make_unique<layrix::ColorPickerWindow>();
@@ -100,7 +157,7 @@ EditorWindow::EditorWindow() : store_(layrix::LayoutStore::BesideExecutable()) {
         const auto error = layrix::SetStartup(StartupToggle().IsOn());
         SyncStartup();
         if (error != ERROR_SUCCESS) {
-            StartupStatus().Text(hstring{L"Не удалось изменить автозапуск. Код ошибки: " + std::to_wstring(error)});
+            StartupStatus().Text(hstring{layrix::Tr(L"startup_write_fail") + std::to_wstring(error)});
         }
     });
     ZonesToggle().Toggled([this](auto&&, auto&&) {
@@ -166,6 +223,21 @@ EditorWindow::EditorWindow() : store_(layrix::LayoutStore::BesideExecutable()) {
     CreateButton().Click([this](auto&&, auto&&) {
         ShowCanvas(layrix::NextCustomName(settings_), L"", {}, true);
     });
+    MenuFlyout languageFlyout;
+    MenuFlyoutItem russian;
+    russian.Text(L"Русский");
+    russian.Click([this](auto&&, auto&&) { SetLanguage(layrix::UiLanguage::Ru); });
+    MenuFlyoutItem english;
+    english.Text(L"English");
+    english.Click([this](auto&&, auto&&) { SetLanguage(layrix::UiLanguage::En); });
+    languageFlyout.Items().Append(russian);
+    languageFlyout.Items().Append(english);
+    LanguageButton().Flyout(languageFlyout);
+    Gallery().SizeChanged([this](auto&&, SizeChangedEventArgs const& args) {
+        if (!editing_ && !suppress_ && std::abs(args.NewSize().Width - args.PreviousSize().Width) > 2.0) {
+            RebuildCards();
+        }
+    });
     Root().KeyDown([this](auto&&, KeyRoutedEventArgs const& args) {
         if (HandleSnapHoldCapture(args)) {
             return;
@@ -219,6 +291,7 @@ void EditorWindow::BuildRuntimeControls() {
 
 void EditorWindow::ReloadFromDisk() {
     settings_ = store_.Load();
+    layrix::SetCurrentUiLanguage(layrix::ParseUiLanguage(settings_.language));
     monitors_ = layrix::EnumerateMonitors();
     if (selected_ >= static_cast<int>(monitors_.size())) {
         selected_ = 0;
@@ -279,11 +352,11 @@ void EditorWindow::RebuildMonitorChips() {
     }
     if (!monitors_.empty()) {
         const auto& bounds = monitors_[static_cast<size_t>(selected_)].bounds;
-        MonitorDescription().Text(hstring{L"Монитор " + std::to_wstring(selected_ + 1) +
+        MonitorDescription().Text(hstring{layrix::Tr(L"monitor") + L" " + std::to_wstring(selected_ + 1) +
             L" · " + std::to_wstring(bounds.right - bounds.left) + L" × " +
             std::to_wstring(bounds.bottom - bounds.top)});
     } else {
-        MonitorDescription().Text(L"Мониторы не найдены");
+        MonitorDescription().Text(T(L"no_monitors"));
     }
 }
 
@@ -299,14 +372,13 @@ void EditorWindow::SelectMonitor(int index) {
 }
 
 void EditorWindow::RebuildCards() {
-    TemplateHost().Children().Clear();
-    CustomHost().Children().Clear();
+    std::vector<UIElement> templates;
+    std::vector<UIElement> customs;
     const std::wstring assigned = AssignedId();
-    int customCount = 0;
     for (const auto& layout : settings_.layouts) {
         auto card = make<TemplateCard>();
         auto* view = get_self<TemplateCard>(card);
-        view->SetTitle(hstring{layout.name});
+        view->SetTitle(hstring{layout.builtin ? layrix::BuiltinLayoutTitle(layout.id) : layout.name});
         view->SetZones(layrix::BuildNormalizedZones(layout));
         view->SetAccent(ToUiColor(layrix::ResolveColor(settings_.accentColor)));
         view->SetSelected(layout.id == assigned);
@@ -314,13 +386,18 @@ void EditorWindow::RebuildCards() {
         view->SetOnClick([this, id] { AssignLayout(id); });
         view->SetOnEdit([this, id] { EditLayout(id); });
         if (layout.builtin) {
-            TemplateHost().Children().Append(card);
+            templates.push_back(card);
         } else {
-            CustomHost().Children().Append(card);
-            ++customCount;
+            view->SetCustomMenu(
+                [this, id] { RenameLayout(id); },
+                [this, id] { DeleteLayout(id); });
+            customs.push_back(card);
         }
     }
-    CustomEmpty().Visibility(customCount == 0 ? Visibility::Visible : Visibility::Collapsed);
+    const double available = std::max(160.0, Gallery().ActualWidth() - 48.0);
+    LayoutCardGrid(TemplateHost(), templates, available);
+    LayoutCardGrid(CustomHost(), customs, available);
+    CustomEmpty().Visibility(customs.empty() ? Visibility::Visible : Visibility::Collapsed);
 }
 
 void EditorWindow::SyncControls() {
@@ -329,7 +406,7 @@ void EditorWindow::SyncControls() {
     const int spacing = layout ? std::clamp(layout->spacing, 0, 32) : 8;
     spacingSlider_.Value(spacing);
     SpacingValue().Text(hstring{std::to_wstring(spacing) + L" px"});
-    SpacingLabel().Text(L"Отступ между зонами");
+    SpacingLabel().Text(T(L"spacing_between"));
     winArrowSwitch_.IsOn(settings_.overrideWinArrows);
     ZonesToggle().IsOn(settings_.zonesEnabled);
     ArrowKeysToggle().IsOn(settings_.overrideWinArrows);
@@ -344,6 +421,7 @@ void EditorWindow::SyncControls() {
     SyncColorEditor(accentColorEditor_, settings_.accentColor, accentSystem);
     suppress_ = false;
     ApplyTheme();
+    ApplyLanguage();
     SyncStartup();
 }
 
@@ -356,9 +434,36 @@ void EditorWindow::SyncStartup() {
     // Leave the switch usable so a broken registration can be repaired.
     StartupToggle().IsEnabled(true);
     StartupStatus().Text(state.error != ERROR_SUCCESS ?
-        hstring{L"Не удалось прочитать настройку автозапуска. Код ошибки: " + std::to_wstring(state.error)} :
-        hstring{state.legacy ? L"Старая запись автозапуска: выключите и снова включите переключатель для восстановления." :
-            (state.enabled ? L"Автозапуск настроен через папку «Автозагрузка» текущего пользователя." : L"Автозапуск выключен.")});
+        hstring{layrix::Tr(L"startup_read_fail") + std::to_wstring(state.error)} :
+        hstring{state.legacy ? layrix::Tr(L"startup_legacy") :
+            (state.enabled ? layrix::Tr(L"startup_ok") : layrix::Tr(L"startup_off"))});
+}
+
+void EditorWindow::MinimizeToTray() {
+    if (colorPicker_) {
+        colorPicker_->Close();
+    }
+    CancelSnapHoldCapture();
+    if (editing_) {
+        desktopEditor_->Close();
+        editing_ = false;
+        draftNew_ = false;
+        draftId_.clear();
+    }
+    AppWindow().Hide();
+}
+
+void EditorWindow::Present(bool settings) {
+    if (editing_) {
+        desktopEditor_->Close();
+        editing_ = false;
+        draftNew_ = false;
+        draftId_.clear();
+        ReloadFromDisk();
+    }
+    AppWindow().Show();
+    ShowSettings(settings);
+    Activate();
 }
 
 bool EditorWindow::ShowSettings(bool show) {
@@ -374,7 +479,7 @@ bool EditorWindow::ShowSettings(bool show) {
     Gallery().Visibility(show ? Visibility::Collapsed : Visibility::Visible);
     MonitorSection().Visibility(show ? Visibility::Collapsed : Visibility::Visible);
     BottomBar().Visibility(show ? Visibility::Collapsed : Visibility::Visible);
-    Title(show ? L"Layrix — Настройки" : L"Layrix — Редактор зон");
+    Title(show ? T(L"title_settings") : T(L"title_editor"));
     return true;
 }
 
@@ -416,7 +521,7 @@ void EditorWindow::ShowCanvas(std::wstring const& name, std::wstring const& id, 
         })) {
         desktopEditor_->Close();
         HideCanvas();
-        MessageBoxW(owner, L"Не удалось открыть редактирование зон на рабочем столе.", L"Layrix", MB_ICONERROR);
+        MessageBoxW(owner, layrix::Tr(L"desktop_edit_fail").c_str(), L"Layrix", MB_ICONERROR);
     }
 }
 
@@ -433,7 +538,7 @@ void EditorWindow::HideCanvas() {
 void EditorWindow::SaveCanvas() {
     std::wstring name = desktopEditor_->Name();
     if (name.empty()) {
-        name = draftNew_ ? layrix::NextCustomName(settings_) : L"Свой макет";
+        name = draftNew_ ? layrix::NextCustomName(settings_) : layrix::Tr(L"custom_layout");
     }
     const auto zones = desktopEditor_->Zones();
     if (zones.empty()) { HideCanvas(); return; }
@@ -467,6 +572,55 @@ void EditorWindow::SaveCanvas() {
     HideCanvas();
 }
 
+void EditorWindow::DeleteLayout(std::wstring const& id) {
+    const auto* layout = settings_.FindLayout(id);
+    if (!layout || layout->builtin) {
+        return;
+    }
+    Persist([&](layrix::AppSettings& settings) {
+        std::erase_if(settings.layouts, [&](const layrix::Layout& item) { return item.id == id; });
+        for (auto& entry : settings.monitorLayouts) {
+            if (entry.second == id) {
+                entry.second = L"columns";
+            }
+        }
+    });
+}
+
+void EditorWindow::RenameLayout(std::wstring const& id) {
+    const auto* layout = settings_.FindLayout(id);
+    if (!layout || layout->builtin) {
+        return;
+    }
+    ContentDialog dialog;
+    dialog.XamlRoot(Root().XamlRoot());
+    dialog.RequestedTheme(ElementTheme::Dark);
+    dialog.Title(box_value(T(L"rename_layout")));
+    dialog.PrimaryButtonText(T(L"save"));
+    dialog.CloseButtonText(T(L"cancel"));
+    dialog.DefaultButton(ContentDialogButton::Primary);
+    TextBox box;
+    box.Text(hstring{layout->name});
+    box.PlaceholderText(T(L"layout_name_ph"));
+    dialog.Content(box);
+    auto operation = dialog.ShowAsync();
+    operation.Completed([this, id, box](auto const& sender, winrt::Windows::Foundation::AsyncStatus status) {
+        if (status != winrt::Windows::Foundation::AsyncStatus::Completed ||
+            sender.GetResults() != ContentDialogResult::Primary) {
+            return;
+        }
+        const std::wstring name = TrimName(std::wstring{box.Text()});
+        if (name.empty()) {
+            return;
+        }
+        Persist([id, name](layrix::AppSettings& settings) {
+            if (auto* item = settings.FindLayout(id)) {
+                item->name = name;
+            }
+        });
+    });
+}
+
 void EditorWindow::DeleteCanvas() {
     if (draftNew_) {
         HideCanvas();
@@ -474,14 +628,7 @@ void EditorWindow::DeleteCanvas() {
     }
     const std::wstring id = draftId_;
     editing_ = false;
-    Persist([&](layrix::AppSettings& settings) {
-        std::erase_if(settings.layouts, [&](const layrix::Layout& layout) { return layout.id == id; });
-        for (auto& entry : settings.monitorLayouts) {
-            if (entry.second == id) {
-                entry.second = L"columns";
-            }
-        }
-    });
+    DeleteLayout(id);
     HideCanvas();
 }
 
@@ -539,6 +686,74 @@ void EditorWindow::EnableGlassBackdrop() {
     }
 }
 
+void EditorWindow::SetLanguage(layrix::UiLanguage language) {
+    if (layrix::ParseUiLanguage(settings_.language) == language) {
+        return;
+    }
+    Persist([language](layrix::AppSettings& settings) {
+        settings.language = std::wstring(layrix::UiLanguageCode(language));
+    });
+}
+
+void EditorWindow::ApplyLanguage() {
+    const bool english = layrix::CurrentUiLanguage() == layrix::UiLanguage::En;
+    LanguageLabel().Text(english ? L"EN" : L"RU");
+    ToolTipService::SetToolTip(LanguageButton(), box_value(T(L"lang_tooltip")));
+    ToolTipService::SetToolTip(SettingsButton(), box_value(T(L"settings_tooltip")));
+    TemplatesTitle().Text(T(L"templates"));
+    CustomTitle().Text(T(L"custom_layouts"));
+    CustomEmptyTitle().Text(T(L"custom_empty_title"));
+    CustomEmptyHint().Text(T(L"custom_empty_hint"));
+    SnapSettingsExpander().Header(box_value(T(L"snap_settings")));
+    WinArrowsLabel().Text(T(L"win_arrows_label"));
+    BackToLayouts().Content(box_value(T(L"back_to_layouts")));
+    SettingsTitle().Text(T(L"settings_title"));
+    SettingsIntro().Text(T(L"settings_intro"));
+    StartupToggle().Header(box_value(T(L"startup")));
+    StartupToggle().OnContent(box_value(T(L"on")));
+    StartupToggle().OffContent(box_value(T(L"off")));
+    StartupHelp().Text(T(L"startup_help"));
+    ZonesToggle().Header(box_value(T(L"zones")));
+    ZonesToggle().OnContent(box_value(T(L"enabled_f")));
+    ZonesToggle().OffContent(box_value(T(L"disabled_f")));
+    SnapHoldLabel().Text(T(L"snap_key"));
+    SnapHoldReset().Content(box_value(T(L"reset")));
+    ArrowKeysToggle().Header(box_value(T(L"win_arrows")));
+    ArrowKeysToggle().OnContent(box_value(T(L"enabled_n")));
+    ArrowKeysToggle().OffContent(box_value(T(L"disabled_n")));
+    ArrowKeysHint().Text(T(L"win_arrows_hint"));
+    ZoneDisplayTitle().Text(T(L"zone_display"));
+    if (ZoneDisplayCombo().Items().Size() >= 3) {
+        if (auto item = ZoneDisplayCombo().Items().GetAt(0).try_as<ComboBoxItem>()) {
+            item.Content(box_value(T(L"zone_display_hidden")));
+        }
+        if (auto item = ZoneDisplayCombo().Items().GetAt(1).try_as<ComboBoxItem>()) {
+            item.Content(box_value(T(L"zone_display_top")));
+        }
+        if (auto item = ZoneDisplayCombo().Items().GetAt(2).try_as<ComboBoxItem>()) {
+            item.Content(box_value(T(L"zone_display_desktop")));
+        }
+    }
+    ZoneColorTitle().Text(T(L"zone_color"));
+    ZoneColorSystemToggle().Header(box_value(T(L"system_color")));
+    ZoneColorSystemToggle().OnContent(box_value(T(L"system_on")));
+    ZoneColorSystemToggle().OffContent(box_value(T(L"system_off")));
+    ZoneColorHelp().Text(T(L"zone_color_help"));
+    AccentColorTitle().Text(T(L"accent_color"));
+    AccentColorSystemToggle().Header(box_value(T(L"system_color")));
+    AccentColorSystemToggle().OnContent(box_value(T(L"system_on")));
+    AccentColorSystemToggle().OffContent(box_value(T(L"system_off")));
+    AccentColorHelp().Text(T(L"accent_color_help"));
+    CreateButton().Content(box_value(T(L"create_layout")));
+    if (zoneColorEditor_.palette) {
+        zoneColorEditor_.palette.Content(box_value(T(L"palette")));
+    }
+    if (accentColorEditor_.palette) {
+        accentColorEditor_.palette.Content(box_value(T(L"palette")));
+    }
+    Title(SettingsPage().Visibility() == Visibility::Visible ? T(L"title_settings") : T(L"title_editor"));
+}
+
 void EditorWindow::ApplyTheme() {
     const Color accent = ToUiColor(layrix::ResolveColor(settings_.accentColor));
     TitleIcon().Foreground(Paint(229, 229, 229));
@@ -584,6 +799,10 @@ void EditorWindow::ApplyTheme() {
         PutResource(resources, L"ComboBoxItemBackgroundSelectedPointerOver", SolidColorBrush(ColorHelper::FromArgb(255, 61, 61, 61)));
         PutResource(resources, L"ComboBoxItemBackgroundSelectedPressed", menuHover);
         PutResource(resources, L"ComboBoxItemBackgroundDisabled", menu);
+        PutResource(resources, L"MenuFlyoutPresenterBackground", menu);
+        PutResource(resources, L"MenuFlyoutItemBackground", menu);
+        PutResource(resources, L"MenuFlyoutItemBackgroundPointerOver", menuHover);
+        PutResource(resources, L"MenuFlyoutItemBackgroundPressed", SolidColorBrush(ColorHelper::FromArgb(255, 50, 50, 50)));
     } catch (...) {
     }
 }
@@ -619,7 +838,7 @@ void EditorWindow::BuildColorEditor(ColorEditor& editor, StackPanel const& host,
     row.Children().Append(editor.hex);
 
     editor.palette = Button();
-    editor.palette.Content(box_value(hstring{L"Палитра"}));
+    editor.palette.Content(box_value(T(L"palette")));
     editor.palette.Height(36);
     editor.palette.Padding(Thickness{14, 0, 14, 0});
     editor.palette.CornerRadius(winrt::Microsoft::UI::Xaml::CornerRadius(16.0));
@@ -728,13 +947,13 @@ void EditorWindow::SyncSnapHold() {
     SnapHoldButton().Content(box_value(hstring{layrix::FormatKeyChord(settings_.snapHold)}));
     ZonesSnapHint().Text(hstring{layrix::FormatSnapHint(settings_.snapHold)});
     FooterHint().Text(hstring{layrix::FormatSnapFooter(settings_.snapHold)});
-    SnapHoldHint().Text(L"Нажмите кнопку с комбинацией, затем клавишу или сочетание. Esc отменяет запись.");
+    SnapHoldHint().Text(T(L"snap_hold_hint"));
 }
 
 void EditorWindow::BeginSnapHoldCapture() {
     capturingSnapHold_ = true;
-    SnapHoldButton().Content(box_value(hstring{L"Нажмите клавишу…"}));
-    SnapHoldHint().Text(L"Удерживайте модификаторы и нажмите клавишу. Esc — отмена.");
+    SnapHoldButton().Content(box_value(T(L"snap_hold_capture")));
+    SnapHoldHint().Text(T(L"snap_hold_capture_hint"));
     SnapHoldButton().Focus(FocusState::Programmatic);
 }
 

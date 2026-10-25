@@ -3,6 +3,7 @@
 #include "EditorWindow.g.h"
 #include "engine/LayoutStore.h"
 #include "engine/MonitorService.h"
+#include "engine/UiStrings.h"
 #include "ColorPickerWindow.h"
 
 #include <string>
@@ -16,8 +17,10 @@ struct EditorWindow : EditorWindowT<EditorWindow> {
     EditorWindow();
     ~EditorWindow();
     bool ShowSettings(bool show);
+    void Present(bool settings);
 
 private:
+    void MinimizeToTray();
     void BuildRuntimeControls();
     void ReloadFromDisk();
     void Persist(std::function<void(layrix::AppSettings&)> change);
@@ -32,8 +35,12 @@ private:
     void HideCanvas();
     void SaveCanvas();
     void DeleteCanvas();
+    void DeleteLayout(std::wstring const& id);
+    void RenameLayout(std::wstring const& id);
     void CommitSpacing();
     void ApplyTheme();
+    void ApplyLanguage();
+    void SetLanguage(layrix::UiLanguage language);
     void EnableGlassBackdrop();
     void NotifyEngine() const;
     void FlashSelected() const;

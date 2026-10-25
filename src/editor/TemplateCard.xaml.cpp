@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "TemplateCard.xaml.h"
+#include "engine/UiStrings.h"
 
 #include <algorithm>
 
@@ -29,6 +30,7 @@ TemplateCard::TemplateCard() {
     EditButton().Click([this](auto&&, RoutedEventArgs const&) {
         if (onEdit_) onEdit_();
     });
+    ToolTipService::SetToolTip(EditButton(), box_value(hstring{layrix::Tr(L"edit_zones")}));
     PointerEntered([this](auto&&, auto&&) {
         if (!selected_) Card().Background(Paint(70, 70, 70, 180));
     });
@@ -39,6 +41,12 @@ TemplateCard::TemplateCard() {
 
 void TemplateCard::SetTitle(hstring const& title) {
     TitleText().Text(title);
+}
+
+void TemplateCard::SetCardWidth(double width) {
+    const double clamped = std::clamp(width, 140.0, 180.0);
+    Card().Width(clamped);
+    Card().Height(clamped * (140.0 / 162.0));
 }
 
 void TemplateCard::SetZones(std::vector<layrix::NormRect> const& zones) {
@@ -68,6 +76,50 @@ void TemplateCard::SetOnClick(std::function<void()> callback) {
 
 void TemplateCard::SetOnEdit(std::function<void()> callback) {
     onEdit_ = std::move(callback);
+}
+
+void TemplateCard::SetCustomMenu(std::function<void()> onRename, std::function<void()> onDelete) {
+    onRename_ = std::move(onRename);
+    onDelete_ = std::move(onDelete);
+    BuildCustomMenu();
+}
+
+void TemplateCard::BuildCustomMenu() {
+    if (!onEdit_ && !onRename_ && !onDelete_) {
+        ContextFlyout(nullptr);
+        Card().ContextFlyout(nullptr);
+        return;
+    }
+    MenuFlyout flyout;
+    if (onEdit_) {
+        MenuFlyoutItem edit;
+        edit.Text(hstring{layrix::Tr(L"edit_layout")});
+        edit.Click([this](auto&&, auto&&) {
+            if (onEdit_) onEdit_();
+        });
+        flyout.Items().Append(edit);
+    }
+    if (onRename_) {
+        MenuFlyoutItem rename;
+        rename.Text(hstring{layrix::Tr(L"rename_layout")});
+        rename.Click([this](auto&&, auto&&) {
+            if (onRename_) onRename_();
+        });
+        flyout.Items().Append(rename);
+    }
+    if (onDelete_) {
+        if (flyout.Items().Size() > 0) {
+            flyout.Items().Append(MenuFlyoutSeparator());
+        }
+        MenuFlyoutItem remove;
+        remove.Text(hstring{layrix::Tr(L"delete_layout")});
+        remove.Click([this](auto&&, auto&&) {
+            if (onDelete_) onDelete_();
+        });
+        flyout.Items().Append(remove);
+    }
+    Card().ContextFlyout(flyout);
+    ContextFlyout(flyout);
 }
 
 void TemplateCard::Redraw() {

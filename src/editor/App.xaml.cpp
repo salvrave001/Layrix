@@ -3,6 +3,7 @@
 
 #include "EditorApi.h"
 #include "EditorWindow.xaml.h"
+#include "engine/UiStrings.h"
 
 #include <chrono>
 #include <condition_variable>
@@ -48,15 +49,13 @@ void LoadFrameworkThemes(Application const& app) {
 void OpenEditorWindow(bool settings) {
     auto& host = Host();
     if (host.editor) {
-        if (winrt::get_self<winrt::LayrixEditor::implementation::EditorWindow>(host.editor)->ShowSettings(settings)) {
-            host.editor.Activate();
-        }
+        winrt::get_self<winrt::LayrixEditor::implementation::EditorWindow>(host.editor)->Present(settings);
         return;
     }
     try {
         host.editor = make<LayrixEditor::implementation::EditorWindow>();
     } catch (hresult_error const& error) {
-        std::wstring text = L"Не удалось открыть редактор зон.\n";
+        std::wstring text = layrix::Tr(L"editor_open_fail") + L"\n";
         text += error.message().c_str();
         wchar_t code[32]{};
         swprintf_s(code, L"\nHRESULT: 0x%08X", static_cast<unsigned int>(error.code().value));
@@ -64,7 +63,8 @@ void OpenEditorWindow(bool settings) {
         MessageBoxW(nullptr, text.c_str(), L"Layrix", MB_ICONERROR);
         return;
     } catch (...) {
-        MessageBoxW(nullptr, L"Не удалось открыть редактор зон.", L"Layrix", MB_ICONERROR);
+        const auto message = layrix::Tr(L"editor_open_fail");
+        MessageBoxW(nullptr, message.c_str(), L"Layrix", MB_ICONERROR);
         return;
     }
     host.editor.Closed([](auto&&, auto&&) {
@@ -74,8 +74,7 @@ void OpenEditorWindow(bool settings) {
             Host().editor = nullptr;
         }
     });
-    winrt::get_self<winrt::LayrixEditor::implementation::EditorWindow>(host.editor)->ShowSettings(settings);
-    host.editor.Activate();
+    winrt::get_self<winrt::LayrixEditor::implementation::EditorWindow>(host.editor)->Present(settings);
 }
 
 void EditorThread() {
@@ -141,13 +140,15 @@ void RequestShowEditor(bool settings) {
             std::thread(EditorThread).detach();
         }
         if (!host.ready.wait_for(lock, std::chrono::seconds(20), [&host] { return host.dispatcherReady; })) {
-            MessageBoxW(nullptr, L"Не удалось открыть редактор зон.", L"Layrix", MB_ICONERROR);
+            const auto message = layrix::Tr(L"editor_open_fail");
+            MessageBoxW(nullptr, message.c_str(), L"Layrix", MB_ICONERROR);
             return;
         }
         auto queue = host.queue;
         lock.unlock();
         if (!queue || !queue.TryEnqueue([settings] { OpenEditorWindow(settings); })) {
-            MessageBoxW(nullptr, L"Не удалось открыть редактор зон.", L"Layrix", MB_ICONERROR);
+            const auto message = layrix::Tr(L"editor_open_fail");
+            MessageBoxW(nullptr, message.c_str(), L"Layrix", MB_ICONERROR);
         }
     }).detach();
 }
